@@ -1,0 +1,597 @@
+---
+titlC:/E "kinase"
+author: "H. Yu"
+datC:/E "7/15/2023"
+output: html_document
+---
+#### single soma
+
+#### generate kinase expression data frame from different datasets based on raw count gene expression matrix
+```{r, fig.width=10, fig.height=30}
+drg <-
+  read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/human_drg_somaseq_rawcounts.csv",header=TRUE)
+
+rows_to_remove <- grepl("\\.", drg$Gene_ID)
+
+drg <- drg[!rows_to_remove, ]
+
+drg <- drg[!duplicated(drg$Gene_ID), ]
+
+rownames <- drg[, 1]
+drg <- drg[, -1]
+row.names(drg) <- rownames
+
+# Select all kinase according to Gene Ontology
+kinase_list <-
+  biomaRt::getBM(
+    filters = "go",
+    attributes = c("ensembl_gene_id", "hgnc_symbol","description"),
+    values = c('GO:0004896','GO:0004950'),
+    mart = biomaRt::useDataset("hsapiens_gene_ensembl", biomaRt::useMart("ensembl"))
+  )
+
+#kinase list
+drg_kinase=c()
+for(i in c(kinase_list$hgnc_symbol))
+  if (i %in% row.names(drg))
+    drg_kinase=c(drg_kinase,i)
+
+drg_cluster <- drg[drg_kinase,]
+
+
+# Calculate row sums
+row_sums <- rowSums(drg_cluster)
+
+# Identify rows where the sum is 0
+zero_rows <- row_sums == 0
+
+# Remove those rows
+drg_cluster <- drg_cluster[!zero_rows, ]
+
+rows_to_remove <- grepl("\\.", rownames(drg_cluster))
+drg_cluster<- drg_cluster[!rows_to_remove, ]
+
+
+write.csv(drg_cluster,"C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/kinase_somaseq_rawcounts.csv")
+```
+
+
+#### Select effective kinase expression 
+```{r}
+
+## To remove low expression kinase either with low count or low percentage in all cells and keep effective detection kinase, introduce two parameters
+Detect_number_greater_than = 0  ## (parameter for low count threshold)
+Percentage = 0.01 ## (parameter for low percentage in all cells)
+
+
+
+## read raw count gene expression matrix
+drg_cluster <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/kinase_somaseq_rawcounts.csv")
+
+
+## Select effective detected kinase
+# Initialize a vector to hold the count for each row
+count_values_greater_than_zero <- numeric(nrow(drg_cluster))
+# Loop over each row
+for (i in 1:nrow(drg_cluster)) {
+  # Count the number of values in the i-th row that are greater than 0 and store it in the vector
+  count_values_greater_than_zero[i] <- sum(drg_cluster[i,] > Detect_number_greater_than)
+}
+num_columns <- ncol(drg_cluster)
+detection_index = count_values_greater_than_zero/num_columns
+effective_detection_kinase_number=count(detection_index >= Percentage)
+single_soma <- drg_cluster[detection_index >= Percentage, "X"]
+
+## print the total number of effective detected kinase and save as csv file
+print(paste("effective_kinase_number:", effective_detection_kinase_number[2,2]))
+print(single_soma)
+write.csv(single_soma,"C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/single_soma_kinase.csv")
+
+```
+
+
+
+
+#### single nucleus
+```{r, fig.width=10, fig.height=30}
+drg <-
+  read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/human_drg_nucleuseq_rawcounts.csv",header=TRUE)
+
+rows_to_remove <- grepl("\\.", drg$Gene_ID)
+
+drg <- drg[!rows_to_remove, ]
+
+drg <- drg[!duplicated(drg$Gene_ID), ]
+
+rownames <- drg[, 1]
+drg <- drg[, -1]
+row.names(drg) <- rownames
+
+# Select all kinases according to Gene Ontology
+kinase_list <-
+  biomaRt::getBM(
+    filters = "go",
+    attributes = c("ensembl_gene_id", "hgnc_symbol","description"),
+    values = c('GO:0004896','GO:0004950'),
+    mart = biomaRt::useDataset("hsapiens_gene_ensembl", biomaRt::useMart("ensembl"))
+  )
+
+#kinase list
+drg_kinase=c()
+for(i in c(kinase_list$hgnc_symbol))
+  if (i %in% row.names(drg))
+    drg_kinase=c(drg_kinase,i)
+
+drg_cluster <- drg[drg_kinase,]
+
+
+# Calculate row sums
+row_sums <- rowSums(drg_cluster)
+
+# Identify rows where the sum is 0
+zero_rows <- row_sums == 0
+
+# Remove those rows
+drg_cluster <- drg_cluster[!zero_rows, ]
+
+rows_to_remove <- grepl("\\.", rownames(drg_cluster))
+drg_cluster<- drg_cluster[!rows_to_remove, ]
+
+
+write.csv(drg_cluster,"C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/kinase_nucleuseq_rawcounts.csv")
+```
+
+
+#### Select effective kinase expression 
+```{r}
+
+## To remove low expression kinase either with low count or low percentage in all cells and keep effective detection kinase, introduce two parameters
+Detect_number_greater_than = 0  ## (parameter for low count threshold)
+Percentage = 0.01 ## (parameter for low percentage in all cells)
+
+
+
+## read raw count gene expression matrix
+drg_cluster <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/kinase_nucleuseq_rawcounts.csv")
+
+
+## Select effective detected kinase
+# Initialize a vector to hold the count for each row
+count_values_greater_than_zero <- numeric(nrow(drg_cluster))
+# Loop over each row
+for (i in 1:nrow(drg_cluster)) {
+  # Count the number of values in the i-th row that are greater than 0 and store it in the vector
+  count_values_greater_than_zero[i] <- sum(drg_cluster[i,] > Detect_number_greater_than)
+}
+num_columns <- ncol(drg_cluster)
+detection_index = count_values_greater_than_zero/num_columns
+effective_detection_kinase_number=count(detection_index >= Percentage)
+single_nucleus <- drg_cluster[detection_index >= Percentage, "X"]
+
+## print the total number of effective detected kinase and save as csv file
+print(paste("effective_kinase_number:", effective_detection_kinase_number[2,2]))
+print(single_nucleus)
+write.csv(single_nucleus,"C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/single_nucleus_kinase.csv")
+
+```
+
+#### spatial
+```{r, fig.width=10, fig.height=30}
+drg <-
+  read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/human_drg_spatialseq_rawcounts.csv",header=TRUE)
+
+rows_to_remove <- grepl("\\.", drg[,1])
+
+drg <- drg[!rows_to_remove, ]
+
+drg <- drg[!duplicated(drg[,1]), ]
+
+rownames <- drg[, 1]
+drg <- drg[, -1]
+row.names(drg) <- rownames
+
+# Select all kinases according to Gene Ontology
+kinase_list <-
+  biomaRt::getBM(
+    filters = "go",
+    attributes = c("ensembl_gene_id", "hgnc_symbol","description"),
+    values = c('GO:0004896','GO:0004950'),
+    mart = biomaRt::useDataset("hsapiens_gene_ensembl", biomaRt::useMart("ensembl"))
+  )
+
+#kinase list
+drg_kinase=c()
+for(i in c(kinase_list$hgnc_symbol))
+  if (i %in% row.names(drg))
+    drg_kinase=c(drg_kinase,i)
+
+drg_cluster <- drg[drg_kinase,]
+
+
+# Calculate row sums
+row_sums <- rowSums(drg_cluster)
+
+# Identify rows where the sum is 0
+zero_rows <- row_sums == 0
+
+# Remove those rows
+drg_cluster <- drg_cluster[!zero_rows, ]
+
+rows_to_remove <- grepl("\\.", rownames(drg_cluster))
+drg_cluster<- drg_cluster[!rows_to_remove, ]
+
+
+write.csv(drg_cluster,"C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/kinase_spatialseq_rawcounts.csv")
+```
+
+
+#### Select effective kinase expression 
+```{r}
+
+## To remove low expression kinase either with low count or low percentage in all cells and keep effective detection kinase, introduce two parameters
+Detect_number_greater_than = 0  ## (parameter for low count threshold)
+Percentage = 0.01 ## (parameter for low percentage in all cells)
+
+
+
+## read raw count gene expression matrix
+drg_cluster <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/kinase_spatialseq_rawcounts.csv")
+
+
+## Select effective detected kinase
+# Initialize a vector to hold the count for each row
+count_values_greater_than_zero <- numeric(nrow(drg_cluster))
+# Loop over each row
+for (i in 1:nrow(drg_cluster)) {
+  # Count the number of values in the i-th row that are greater than 0 and store it in the vector
+  count_values_greater_than_zero[i] <- sum(drg_cluster[i,] > Detect_number_greater_than)
+}
+num_columns <- ncol(drg_cluster)
+detection_index = count_values_greater_than_zero/num_columns
+effective_detection_kinase_number=count(detection_index >= Percentage)
+spatial <- drg_cluster[detection_index >= Percentage, "X"]
+
+## print the total number of effective detected kinase and save as csv file
+print(paste("effective_kinase_number:", effective_detection_kinase_number[2,2]))
+print(spatial)
+write.csv(spatial,"C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/spatial_kinase.csv")
+
+```
+
+
+### identify the kinase epxression difference in different dataset 
+
+```{r}
+
+## read data
+single_soma_list <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/single_soma_kinase.csv")
+single_nucleus_list <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/single_nucleus_kinase.csv")
+spatial_list <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/spatial_kinase.csv")
+
+single_soma <- c(single_soma_list[,2])
+single_nucleus <- c(single_nucleus_list[,2])
+spatial<- c(spatial_list[,2])
+
+# Elements in both single_soma, single_nucleus, and spatial
+in_single_soma_single_nucleus_spatial <- Reduce(intersect, list(single_soma, single_nucleus, spatial))
+cat("Elements in both single_soma, single_nucleus, and spatial:\n")
+print(in_single_soma_single_nucleus_spatial)
+cat("Total:", length(in_single_soma_single_nucleus_spatial), "\n\n")
+
+# Elements in single_soma and single_nucleus but not in spatial
+in_single_soma_single_nucleus_not_spatial <- setdiff(intersect(single_soma, single_nucleus), spatial)
+cat("Elements in both single_soma, single_nucleus, but not spatial:\n")
+print(in_single_soma_single_nucleus_not_spatial)
+cat("Total:", length(in_single_soma_single_nucleus_not_spatial), "\n\n")
+
+
+# Elements in single_soma and spatial but not in single_nucleus
+in_single_soma_spatial_not_single_nucleus <- setdiff(intersect(single_soma, spatial), single_nucleus)
+cat("Elements in both single_soma,spatial , but not single_nucleus:\n")
+print(in_single_soma_spatial_not_single_nucleus)
+cat("Total:", length(in_single_soma_spatial_not_single_nucleus), "\n\n")
+
+
+
+# Elements in single_nucleus and spatial but not in single_soma
+in_single_nucleus_spatial_not_single_soma <- setdiff(intersect(single_nucleus, spatial), single_soma)
+cat("Elements in both  spatial, single_nucleus but not single_soma:\n")
+print(in_single_nucleus_spatial_not_single_soma)
+cat("Total:", length(in_single_nucleus_spatial_not_single_soma), "\n\n")
+
+# Elements specific in single_soma
+specific_single_soma <- setdiff(single_soma, union(single_nucleus, spatial))
+cat("Elements specific in single_soma:\n")
+print(specific_single_soma)
+cat("Total:", length(specific_single_soma), "\n\n")
+
+# Elements specific in single_nucleus
+specific_single_nucleus <- setdiff(single_nucleus, union(single_soma, spatial))
+cat("Elements specific in single_nucleus:\n")
+print(specific_single_nucleus)
+cat("Total:", length(specific_single_nucleus), "\n\n")
+
+# Elements specific in spatial
+specific_spatial <- setdiff(spatial, union(single_soma, single_nucleus))
+cat("Elements specific in spatial:\n")
+print(specific_spatial)
+cat("Total:", length(specific_spatial), "\n\n")
+
+# Elements in both single_soma and single_nucleus
+in_single_soma_single_nucleus <- intersect(single_soma, single_nucleus)
+cat("Elements in both single_soma and single_nucleus:\n")
+print(in_single_soma_single_nucleus)
+cat("Total:", length(in_single_soma_single_nucleus), "\n\n")
+
+# Elements in both single_soma and spatial
+in_single_soma_spatial <- intersect(single_soma, spatial)
+cat("Elements in both single_soma and spatial:\n")
+print(in_single_soma_spatial)
+cat("Total:", length(in_single_soma_spatial), "\n\n")
+
+# Elements in both single_nucleus and spatial
+in_single_nucleus_spatial <- intersect(single_nucleus, spatial)
+cat("Elements in both single_nucleus and spatial:\n")
+print(in_single_nucleus_spatial)
+cat("Total:", length(in_single_nucleus_spatial), "\n\n")
+
+
+```
+
+
+
+#### Heatmap to show the kinase expression difference in different datasets
+```{r}
+## All kinases detected in each three datasets
+## read data
+single_soma_list <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/single_soma_kinase.csv")
+single_nucleus_list <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/single_nucleus_kinase.csv")
+spatial_list <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/spatial_kinase.csv")
+
+single_soma <- c(single_soma_list[,2])
+single_nucleus <- c(single_nucleus_list[,2])
+spatial<- c(spatial_list[,2])
+
+merged_unique_elements <- Reduce(union, list(single_soma, single_nucleus, spatial))
+
+
+```
+
+```{r}
+
+## single soma 
+
+drg_cluster <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/kinase_somaseq_rawcounts.csv")
+
+
+# Get the names of all columns in drg_cluster
+all_columns <- names(drg_cluster)
+
+# For each element in single_soma
+for(element in merged_unique_elements){
+  
+  # If the element is not in column X of drg_cluster
+  if(!(element %in% drg_cluster$X)){
+    
+    # Create a new row where the value in column X is the element and all other columns are 0
+    new_row <- setNames(data.frame(matrix(ncol = length(all_columns), nrow = 1)), all_columns)
+    new_row$X <- element
+    new_row[,-which(names(new_row)=="X")] <- 0
+    
+    # Add the new row to drg_cluster
+    drg_cluster <- rbind(drg_cluster, new_row)
+  }
+}
+
+write.csv(drg_cluster,"C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/Heatmap/kinase_somaseq_rawcounts_common.csv")
+
+single_soma <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/Heatmap/kinase_somaseq_rawcounts_common.csv")
+
+selected_rows <- single_soma[single_soma$X %in% merged_unique_elements, ]
+
+write.csv(selected_rows,"C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/Heatmap/kinase_somaseq_rawcounts_heatmap.csv")
+
+
+```
+
+
+```{r}
+
+#single nucleus
+drg_cluster <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/kinase_nucleuseq_rawcounts.csv")
+
+
+# Get the names of all columns in drg_cluster
+all_columns <- names(drg_cluster)
+
+# For each element in single_nucleus
+for(element in merged_unique_elements){
+  
+  # If the element is not in column X of drg_cluster
+  if(!(element %in% drg_cluster$X)){
+    
+    # Create a new row where the value in column X is the element and all other columns are 0
+    new_row <- setNames(data.frame(matrix(ncol = length(all_columns), nrow = 1)), all_columns)
+    new_row$X <- element
+    new_row[,-which(names(new_row)=="X")] <- 0
+    
+    # Add the new row to drg_cluster
+    drg_cluster <- rbind(drg_cluster, new_row)
+  }
+}
+
+write.csv(drg_cluster,"C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/Heatmap/kinase_nucleuseq_rawcounts_common.csv")
+
+single_nucleus <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/Heatmap/kinase_nucleuseq_rawcounts_common.csv")
+
+selected_rows <- single_nucleus[single_nucleus$X %in% merged_unique_elements, ]
+
+write.csv(selected_rows,"C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/Heatmap/kinase_nucleuseq_rawcounts_heatmap.csv")
+```
+
+
+```{r}
+
+#spatial
+drg_cluster <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/kinase_spatialseq_rawcounts.csv")
+
+
+# Get the names of all columns in drg_cluster
+all_columns <- names(drg_cluster)
+
+# For each element in sptial
+for(element in merged_unique_elements){
+  
+  # If the element is not in column X of drg_cluster
+  if(!(element %in% drg_cluster$X)){
+    
+    # Create a new row where the value in column X is the element and all other columns are 0
+    new_row <- setNames(data.frame(matrix(ncol = length(all_columns), nrow = 1)), all_columns)
+    new_row$X <- element
+    new_row[,-which(names(new_row)=="X")] <- 0
+    
+    # Add the new row to drg_cluster
+    drg_cluster <- rbind(drg_cluster, new_row)
+  }
+}
+
+write.csv(drg_cluster,"C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/Heatmap/kinase_sptial_rawcounts_common.csv")
+
+sptial <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/Heatmap/kinase_sptial_rawcounts_common.csv")
+
+selected_rows <- sptial[sptial$X %in% merged_unique_elements, ]
+
+write.csv(selected_rows,"C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/Heatmap/kinase_sptial_rawcounts_heatmap.csv")
+
+```
+
+
+#### generate heatmap
+```{r}
+##
+
+# Read the CSV files into data frames
+single_soma <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/Heatmap/kinase_somaseq_rawcounts_heatmap.csv")
+single_nucleus <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/Heatmap/kinase_nucleuseq_rawcounts_heatmap.csv")
+spatial <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Drug target heat map/database comparison/Heatmap/kinase_sptial_rawcounts_heatmap.csv")
+
+# Set the row names to be the values in the first columns
+row.names(single_soma) <- single_soma$X
+row.names(single_nucleus) <- single_nucleus$X
+row.names(spatial) <- spatial$X
+
+# Remove the first columns
+single_soma <- subset(single_soma, select = -c(X, X.1))
+single_nucleus <- subset(single_nucleus, select = -c(X, X.1))
+spatial <- subset(spatial, select = -c(X, X.1))
+
+
+# Calculate the row means and create new data frames
+single_soma_means <- data.frame(RowName = row.names(single_soma), Mean = rowMeans(single_soma, na.rm = TRUE))
+single_nucleus_means <- data.frame(RowName = row.names(single_nucleus), Mean = rowMeans(single_nucleus, na.rm = TRUE))
+spatial_means <- data.frame(RowName = row.names(spatial), Mean = rowMeans(spatial, na.rm = TRUE))
+
+
+# Merge the three mean data frames into one based on the row names
+combined_means <- merge(single_soma_means, single_nucleus_means, by = "RowName", all = TRUE)
+combined_means <- merge(combined_means, spatial_means, by = "RowName", all = TRUE)
+
+# Print the combined mean data frame
+print(combined_means)
+
+# Assume AA, BB, and CC are your data frames
+
+# Rename the "Mean" column for each data frame
+names(single_soma_means)[names(single_soma_means) == "Mean"] <- "single_soma"
+names(single_nucleus_means)[names(single_nucleus_means) == "Mean"] <- "single_nucleus"
+names(spatial_means)[names(spatial_means) == "Mean"] <- "spatial"
+
+# Merge the data frames based on the "RowName" column
+merged_AB <- merge(single_soma_means, single_nucleus_means, by = "RowName", all = TRUE)
+merged_ABC <- merge(merged_AB, spatial_means, by = "RowName", all = TRUE)
+
+# Print the merged data frame
+print(merged_ABC)
+```
+
+
+#### heatmap strategy 1
+
+```{r}
+# Load the dplyr package
+library(dplyr)
+
+# Rank the data frame based on the single soma sequencing
+merged_ABC <- merged_ABC %>%
+  arrange(desc(single_soma))
+
+
+## nomalization
+
+AA <- merged_ABC
+
+# Change the first column to row names
+rownames(AA) <- AA[, 1]
+
+# Remove the first column
+AA <- AA[, -1]
+
+# Change the values to their base 2 logarithms
+AA <- log2(AA+1)
+
+# Print the transformed data frame
+#print(AA)
+
+```
+
+```{r}
+# nomalize column max to 1
+
+AA_normalized <- AA
+
+# Use apply() to iterate over each column (MARGIN = 2)
+AA_normalized <- apply(AA, MARGIN = 2, function(x) x / max(x))
+
+# Convert the matrix result back to a data frame
+AA_normalized <- as.data.frame(AA_normalized)
+
+# Print the normalized data frame
+print(AA_normalized)
+
+```
+
+
+```{r, fig.width=16, fig.height=40}
+
+AA_heatmap <-data.matrix(AA_normalized[0:100,])
+
+lmat = rbind(c(0,4),c(3,1),c(0,2))
+lwid = c(1,5)
+lhei = c(0.1,2.5,0.5)
+
+heatmap.2(as.matrix(AA_heatmap), dendrogram = 'both', Colv = FALSE, Rowv = FALSE, scale = "none", col = bluered(100), trace = "none", density.info = "none",  keysize=0.05, key.title=NA, lmat = lmat, lwid = lwid, lhei = lhei)
+
+
+```
+
+
+##Supplementary Figure 7A
+
+```{r, fig.width=16, fig.height=40}
+
+AA_heatmap <-data.matrix(AA_normalized[0:100,])
+
+lmat = rbind(c(0,4),c(3,1),c(0,2))
+lwid = c(1,5)
+lhei = c(0.1,2.5,0.5)
+
+# Set up the SVG device
+svg(filename = "C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/SF9A_3.svg", width = 16, height = 40)
+
+heatmap.2(as.matrix(AA_heatmap), dendrogram = 'both', Colv = FALSE, Rowv = FALSE, scale = "none", col = bluered(100), trace = "none", density.info = "none",  keysize=0.05, key.title=NA, lmat = lmat, lwid = lwid, lhei = lhei)
+
+# Close the SVG device
+dev.off()
+```
+
+

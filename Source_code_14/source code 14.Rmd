@@ -1,0 +1,327 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+# Load libraries
+library(Seurat)
+library(tidyverse)
+library(gplots)
+```
+
+
+```{r}
+# Load raw data
+drg <-
+  read_delim(here::here("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Project data/Sequencing data/all_three_batches/star/raw_count_all_three_batches_star.csv"),
+             delim = ",") %>%
+  dplyr::select(-1) %>%
+  column_to_rownames("Ensemble_ID")
+```
+```{r}
+## load data
+load("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Project data/Collaborate with Dmitry/Final clustering to everyone-20220713T191113Z-001/Final clustering to everyone/Hs_LCM_Seurat_export_slim.RData")
+```
+
+
+```{r}
+## Glia.con
+Glia.con <- row.names(Meta.fused)[! row.names(Meta.fused) %in% row.names(Meta.1066.wo.glia)]
+
+```
+
+```{r}
+# delete glia con
+drg =drg[,!(names(drg) %in% Glia.con)]
+```
+
+```{r}
+# Data normalization
+drg <- t(t(drg)/colSums(drg))*10^6
+
+```
+
+```{r}
+# Identification of cells in each cluster based on Seurat clustering
+metadata=read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/human_drg_meta_data_final.csv")
+```
+
+
+```{r}
+#C.LTMR, TRPM8, NP1, NP2, NP3, PEP1.13, PEP.H4.15, PEP.H4, PEP3, PEP.H5. PEP.H8, PEP.H0, Un.Gi, Ad.LTMR, Ab.LTMR, Propr
+C.LTMR_cells=metadata[metadata$cl.conserv_final=='C.LTMR',]$sample_id
+TRPM8_cells=metadata[metadata$cl.conserv_final=='TRPM8',]$sample_id
+NP1_cells=metadata[metadata$cl.conserv_final=='NP1',]$sample_id
+NP2_cells=metadata[metadata$cl.conserv_final=='NP2',]$sample_id
+NP3_cells=metadata[metadata$cl.=='NP3',]$sample_id
+PEP1.13_cells=metadata[metadata$cl.conserv_final=='PEP1.13',]$sample_id
+PEP.H4.15_cells=metadata[metadata$cl.conserv_final=='PEP.H4.15',]$sample_id
+PEP.H4_cells=metadata[metadata$cl.conserv_final=='PEP.H4',]$sample_id
+PEP3_cells=metadata[metadata$cl.conserv_final=='PEP3',]$sample_id
+PEP.H5_cells=metadata[metadata$cl.conserv_final=='PEP.H5',]$sample_id
+PEP.H8_cells=metadata[metadata$cl.conserv_final=='PEP.H8',]$sample_id
+PEP.H0_cells=metadata[metadata$cl.conserv_final=='PEP.H0',]$sample_id
+Un.Gi_cells=metadata[metadata$cl.conserv_final=='Un.Gi',]$sample_id
+Ad.LTMR_cells=metadata[metadata$cl.conserv_final=='Ad.LTMR',]$sample_id
+Ab.LTMR_cells=metadata[metadata$cl.conserv_final=='Ab.LTMR',]$sample_id
+Propr_cells=metadata[metadata$cl.conserv_final=='Propr',]$sample_id
+```
+
+
+```{r}
+# Average expression in all clusters  
+all_cluster <- c(rowMeans(drg[,]))
+```
+
+```{r}
+# Average expression in each cluster
+C.LTMR_drg <- drg[,C.LTMR_cells]
+C.LTMR <- c(rowMeans(C.LTMR_drg[,]))
+
+TRPM8_drg <- drg[,TRPM8_cells]
+TRPM8 <- c(rowMeans(TRPM8_drg[,]))
+
+NP1_drg <- drg[,NP1_cells]
+NP1 <- c(rowMeans(NP1_drg[,]))
+
+NP2_drg <- drg[,NP2_cells]
+NP2 <- c(rowMeans(NP2_drg[,]))
+
+NP3_drg <- drg[,NP3_cells]
+NP3 <- c(rowMeans(NP3_drg[,]))
+
+PEP1.13_drg <- drg[,PEP1.13_cells]
+PEP1.13 <- c(rowMeans(PEP1.13_drg[,]))
+
+PEP.H4.15_drg <- drg[,PEP.H4.15_cells]
+PEP.H4.15 <- c(rowMeans(PEP.H4.15_drg[,]))
+
+PEP.H4_drg <- drg[,PEP.H4_cells]
+PEP.H4 <- c(rowMeans(PEP.H4_drg[,]))
+
+PEP3_drg <- drg[,PEP3_cells]
+PEP3 <- c(rowMeans(PEP3_drg[,]))
+
+PEP.H5_drg <- drg[,PEP.H5_cells]
+PEP.H5 <- c(rowMeans(PEP.H5_drg[,]))
+
+PEP.H8_drg <- drg[,PEP.H8_cells]
+PEP.H8 <- c(rowMeans(PEP.H8_drg[,]))
+
+PEP.H0_drg <- drg[,PEP.H0_cells]
+PEP.H0 <- c(rowMeans(PEP.H0_drg[,]))
+
+Un.Gi_drg <- drg[,Un.Gi_cells]
+Un.Gi <- c(rowMeans(Un.Gi_drg[,]))
+
+Ad.LTMR_drg <- drg[,Ad.LTMR_cells]
+Ad.LTMR <- c(rowMeans(Ad.LTMR_drg[,]))
+
+Ab.LTMR_drg <- drg[,Ab.LTMR_cells]
+Ab.LTMR <- c(rowMeans(Ab.LTMR_drg[,]))
+
+Propr_drg <- drg[,Propr_cells]
+Propr <- c(rowMeans(Propr_drg[,]))
+
+NP_drg <- drg[,c(NP1_cells,NP2_cells, NP3_cells)]
+NP <- c(rowMeans(NP_drg[,]))
+
+```
+
+```{r}
+# Generate cluster expression dataframe
+
+#drg_cluster <- data.frame(all_cluster, NP, NP1, NP2, NP3, PEP1.13, PEP.H4.15, PEP.H4, PEP3, PEP.H5, PEP.H8, PEP.H0, Ad.LTMR, Ab.LTMR, Propr,C.LTMR,TRPM8, Un.Gi)
+
+#all_cluster, NP, C.LTMR, TRPM8, NP1, NP2, NP3, PEP1.13, PEP.H4.15, PEP.H4, PEP3, PEP.H5, PEP.H8, PEP.H0, Ad.LTMR, Ab.LTMR, Propr, Un.Gi
+
+drg_cluster <- data.frame(all_cluster, NP, TRPM8, C.LTMR,  NP1, NP2, NP3, PEP1.13, PEP.H4.15, PEP.H4, PEP3, PEP.H5, PEP.H8, PEP.H0, Ad.LTMR, Ab.LTMR, Propr, Un.Gi)
+
+```
+
+```{r}
+drg_cluster <-log10(drg_cluster+1)
+```
+
+
+```{r}
+drg_cluster$Ensemble_ID=c(row.names(drg_cluster))
+drg_cluster %>% select(Ensemble_ID,everything())
+```
+
+```{r}
+# Select all GPCRs according to Gene Ontology
+GPCR_list <-
+  biomaRt::getBM(
+    filters = "go",
+    attributes = c("ensembl_gene_id", "hgnc_symbol","description"),
+    values = 'GO:0004930',
+    mart = biomaRt::useDataset("hsapiens_gene_ensembl", biomaRt::useMart("ensembl"))
+  )
+```
+
+```{r}
+#GPCR list
+drg_GPCR=c()
+for(i in c(GPCR_list$ensembl_gene_id))
+  if (i %in% row.names(drg_cluster))
+    drg_GPCR=c(drg_GPCR,i)
+
+```
+
+```{r}
+drg_cluster <- drg_cluster[drg_GPCR,]
+
+```
+
+```{r}
+# Get GPCR names from Ensembl IDs
+GPCR <-
+  biomaRt::getBM(
+    filters = "ensembl_gene_id",
+    attributes = c("ensembl_gene_id", "hgnc_symbol"),
+    values = pull(drg_cluster, "Ensemble_ID"),
+    mart = biomaRt::useDataset("hsapiens_gene_ensembl", biomaRt::useMart("ensembl"))
+  )
+```
+
+```{r}
+# Get GPCR names from Ensembl IDs
+GPCR <-
+  biomaRt::getBM(
+    filters = "ensembl_gene_id",
+    attributes = c("ensembl_gene_id", "hgnc_symbol"),
+    values = pull(drg_cluster, "Ensemble_ID"),
+    mart = biomaRt::useDataset("hsapiens_gene_ensembl", biomaRt::useMart("ensembl"))
+  )
+```
+
+
+```{r}
+# Get GPCR names from Ensembl IDs
+#write.csv(GPCR, "C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Project data/Sequencing data/Batch1_371/hah.csv")
+
+```
+
+```{r}
+# Add gene names, filter and create Seurat object
+drg_GPCR_heatmap <-
+  drg_cluster %>%
+  left_join(GPCR, by = c("Ensemble_ID" = "ensembl_gene_id")) %>%
+  dplyr::select(hgnc_symbol, everything(),-Ensemble_ID) %>%
+  dplyr::filter(hgnc_symbol != "") %>%
+  modify_at("hgnc_symbol", make.unique)%>%
+  column_to_rownames("hgnc_symbol")
+
+```
+
+```{r}
+# Add gene names, filter and create Seurat object
+drg_GPCR_heatmap <- drg_GPCR_heatmap[drg_GPCR_heatmap$all_cluster>0,]
+```
+
+```{r}
+drg_GPCR_heatmap_ranked <- drg_GPCR_heatmap[order(-drg_GPCR_heatmap$all_cluster),]
+drg_GPCR_heatmap_ranked
+```
+```{r}
+#write.csv(drg_GPCR_heatmap_ranked, "C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Project data/Sequencing data/Batch1_371/hah.csv")
+```
+
+
+```{r, fig.width=8, fig.height=30}
+drg_GPCR_heatmap_ranked_matrix <-data.matrix(drg_GPCR_heatmap_ranked[0:250,])
+
+lmat = rbind(c(0,4),c(3,1),c(0,2))
+lwid = c(1,5)
+lhei = c(0.1,2.5,0.5)
+
+heatmap.2(drg_GPCR_heatmap_ranked_matrix, dendrogram = 'none', Colv = FALSE, Rowv = FALSE, scale = "none", col = bluered(100), trace = "none", density.info = "none",  keysize=0.05, key.title=NA, lmat = lmat, lwid = lwid, lhei = lhei)
+
+
+```
+
+
+
+```{r, fig.width=10, fig.height=30}
+drg_GPCR_heatmap_cluster1_ranked <- drg_GPCR_heatmap[order(-drg_GPCR_heatmap$all_cluster),]
+#drg_GPCR_heatmap_cluster1_ranked
+
+drg_GPCR_heatmap_cluster1_ranked_matrix <-data.matrix(drg_GPCR_heatmap_cluster1_ranked[0:200,])
+
+lmat = rbind(c(0,4),c(3,1),c(0,2))
+lwid = c(1,5)
+lhei = c(0.2,5,0.5)
+
+heatmap.2(drg_GPCR_heatmap_cluster1_ranked_matrix, dendrogram = 'none', Colv = FALSE, Rowv = FALSE, scale = "none", col = bluered(100), trace = "none", density.info = "none",  keysize=0.05, key.title=NA, lmat = lmat, lwid = lwid, lhei = lhei)
+
+```
+
+```{r, fig.width=10, fig.height=60}
+drg_GPCR_heatmap_cluster1_ranked <- drg_GPCR_heatmap[order(-drg_GPCR_heatmap$all_cluster),]
+#drg_GPCR_heatmap_cluster1_ranked
+
+drg_GPCR_heatmap_cluster1_ranked = subset(drg_GPCR_heatmap_cluster1_ranked, select = -c(NP) )
+
+
+drg_GPCR_heatmap_cluster1_ranked_matrix <-data.matrix(drg_GPCR_heatmap_cluster1_ranked[0:200,])
+
+lmat = rbind(c(0,4),c(3,1),c(0,2))
+lwid = c(1,5)
+lhei = c(0.2,5,0.5)
+
+heatmap.2(drg_GPCR_heatmap_cluster1_ranked_matrix, dendrogram = 'none', Colv = FALSE, Rowv = FALSE, scale = "none", col = bluered(100), trace = "none", density.info = "none",  keysize=0.5, key.title=NA, lmat = lmat, lwid = lwid, lhei = lhei, cexRow=1.9, cexCol=2.7, margins=c(1,8))
+
+```
+
+
+
+```{r, fig.width=10, fig.height=30}
+drg_GPCR_heatmap_cluster1_ranked <- drg_GPCR_heatmap[order(-drg_GPCR_heatmap$PEP.H0),]
+#drg_GPCR_heatmap_cluster1_ranked
+
+drg_GPCR_heatmap_cluster1_ranked_matrix <-data.matrix(drg_GPCR_heatmap_cluster1_ranked[0:100,])
+
+lmat = rbind(c(0,4),c(3,1),c(0,2))
+lwid = c(1,5)
+lhei = c(0.2,5,0.5)
+
+
+
+heatmap.2(drg_GPCR_heatmap_cluster1_ranked_matrix, dendrogram = 'none', Colv = FALSE, Rowv = FALSE, scale = "none", col = bluered(100), trace = "none", density.info = "none",  keysize=0.05, key.title=NA, lmat = lmat, lwid = lwid, lhei = lhei, cexRow=1.2, cexCol=2.7, margins=c(1,8))
+# Close the SVG device
+dev.off()
+```
+
+
+##Supplementary Figure 8A
+#####Normalzied max to 1 for each row
+```{r, fig.width=8, fig.height=30}
+divide_by_max <- function(row_vector) {
+  max_value <- max(row_vector)
+  row_vector <- row_vector / max_value
+  return(row_vector)
+}
+
+drg_GPCR_heatmap_ranked_row_normalization <- t(apply(drg_GPCR_heatmap_ranked, 1, divide_by_max))
+
+
+
+drg_GPCR_heatmap_ranked_matrix_row_normalization <-data.matrix(drg_GPCR_heatmap_ranked_row_normalization[0:100,-(1:2)])
+
+lmat = rbind(c(0,4),c(3,1),c(0,2))
+lwid = c(1,5)
+lhei = c(0.1,2.5,0.5)
+
+# Set up the SVG device
+#svg(filename = "C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/SF11.svg", width = 8, height = 30)
+
+
+par(mar = c(5, 4, 4, 15) + 0.1)
+
+heatmap.2(drg_GPCR_heatmap_ranked_matrix_row_normalization, dendrogram = 'none', Colv = FALSE, Rowv = FALSE, scale = "none", col = bluered(100), trace = "none", density.info = "none",  keysize=0.05, key.title=NA, lmat = lmat, lwid = lwid, lhei = lhei,cexRow = 1)
+
+# Close the SVG device
+#dev.off()
+```

@@ -1,0 +1,385 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+##===================================
+## Create Seurat object from raw data
+
+```{r}
+library(Seurat)
+library(ggplot2)
+library(dplyr)
+library(plyr)
+library(svglite)
+library(RColorBrewer) # good sets of color to replace default Seurat colors for better contrast
+```
+
+```{r}
+## load expression matrix and meta data from Dmitry
+load("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Hs_LCM_Seurat_export_slim.RData")
+load("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/human_meta_final_cluster.Rdata")
+
+```
+
+#============================================================
+## Data intergration from different batchs/donors_start
+
+```{r}
+# removing 'GLIA.DUBLETS' cells from all samples, GLIA, DUBLTETS are annotated by Dmitry based on his analysis
+
+HS.counts.clean <- HS.counts.raw[,!(colnames(HS.counts.raw) %in% cells.GLIA.DUBL)]
+
+```
+
+```{r}
+# creating a list of seurat objects corresponding to samples
+Seurat.all.gene <- CreateSeuratObject(HS.counts.clean)
+Seurat.all.gene <- NormalizeData(Seurat.all.gene, normalization.method = "LogNormalize", scale.factor = 10000)
+#Seurat.all.gene <- FindVariableFeatures(Seurat.all.gene, selection.method = "vst", nfeatures = 2000)
+
+```
+
+
+```{r}
+# clustering 
+Seurat.all.gene <- ScaleData(Seurat.all.gene, verbose = T, features)
+```
+
+#===========================================================
+## Import cluster annotation and metadata
+
+
+```{r}
+## Get cell identity of each Seurat cluster
+NP1 <- row.names(human_meta_final_cluster[human_meta_final_cluster$cl.conserv_final=='NP1',])
+NP2 <- row.names(human_meta_final_cluster[human_meta_final_cluster$cl.conserv_final=='NP2',])
+NP3 <- row.names(human_meta_final_cluster[human_meta_final_cluster$cl.conserv_final=='NP3',])
+PEP1.13 <- row.names(human_meta_final_cluster[human_meta_final_cluster$cl.conserv_final=='PEP1.13',])
+PEP.H4.15 <- row.names(human_meta_final_cluster[human_meta_final_cluster$cl.conserv_final=='PEP.H4.15',])
+PEP.H4 <- row.names(human_meta_final_cluster[human_meta_final_cluster$cl.conserv_final=='PEP.H4',])
+PEP3 <- row.names(human_meta_final_cluster[human_meta_final_cluster$cl.conserv_final=='PEP3',])
+PEP.H5 <- row.names(human_meta_final_cluster[human_meta_final_cluster$cl.conserv_final=='PEP.H5',])
+PEP.H8 <- row.names(human_meta_final_cluster[human_meta_final_cluster$cl.conserv_final=='PEP.H8',])
+PEP.H0 <- row.names(human_meta_final_cluster[human_meta_final_cluster$cl.conserv_final=='PEP.H0',])
+Ad.LTMR <- row.names(human_meta_final_cluster[human_meta_final_cluster$cl.conserv_final=='Ad.LTMR',])
+Ab.LTMR <- row.names(human_meta_final_cluster[human_meta_final_cluster$cl.conserv_final=='Ab.LTMR',])
+Propr <- row.names(human_meta_final_cluster[human_meta_final_cluster$cl.conserv_final=='Propr',])
+C.LTMR <- row.names(human_meta_final_cluster[human_meta_final_cluster$cl.conserv_final=='C.LTMR',])
+TRPM8 <- row.names(human_meta_final_cluster[human_meta_final_cluster$cl.conserv_final=='TRPM8',])
+Un.Gi <- row.names(human_meta_final_cluster[human_meta_final_cluster$cl.conserv_final=='Un.Gi',])
+
+```
+
+
+```{r}
+## cl.Ab.split.2 C0-Propr C1-NP1 C2-PEP.H0 C3-PEP.H0 C4-PEP.H8 C5-Ab.LTMR C6-PEP.H5 C7-Ab.LTMR C8-PEP.H4 C9-PEP1.13 C10-NP1 C11-Ad.LTMR C12-NP3 C13-Ad.LTMR C14-PEP3 C15-PEP.H4.15 C16-NP2 C17-C.LTMR C18-Un.Gi
+
+random_group_labels <- sample(x = c("Un.Gi","C.LTMR","TRPM8","Propr","Ab.LTMR.s22","Ab.LTMR","Ad.LTMR","PEP.H0","PEP.H8","PEP.H5","PEP3","PEP.H4","PEP.H4.15","PEP1.13","NP3","NP2","NP1"), size = ncol(x = Seurat.all.gene), replace = TRUE)
+Seurat.all.gene$cl.conserv_final <- random_group_labels
+
+Seurat.all.gene$cl.conserv_final[NP1] <- "NP1"
+Seurat.all.gene$cl.conserv_final[NP2] <- "NP2"
+Seurat.all.gene$cl.conserv_final[NP3] <- "NP3"
+Seurat.all.gene$cl.conserv_final[PEP1.13] <- "PEP1.13"
+Seurat.all.gene$cl.conserv_final[PEP.H4.15] <- "PEP.H4.15"
+Seurat.all.gene$cl.conserv_final[PEP.H4] <- "PEP.H4"
+Seurat.all.gene$cl.conserv_final[PEP3] <- "PEP3"
+Seurat.all.gene$cl.conserv_final[PEP.H5] <- "PEP.H5"
+Seurat.all.gene$cl.conserv_final[PEP.H8] <- "PEP.H8"
+Seurat.all.gene$cl.conserv_final[PEP.H0] <- "PEP.H0"
+Seurat.all.gene$cl.conserv_final[Ad.LTMR] <- "Ad.LTMR"
+Seurat.all.gene$cl.conserv_final[Ab.LTMR] <- "Ab.LTMR"
+Seurat.all.gene$cl.conserv_final[Propr] <- "Propr"
+Seurat.all.gene$cl.conserv_final[C.LTMR] <- "C.LTMR"
+Seurat.all.gene$cl.conserv_final[TRPM8] <- "TRPM8"
+Seurat.all.gene$cl.conserv_final[Un.Gi] <- "Un.Gi"
+
+```
+
+
+```{r}
+##==================================================
+# importing clusters annotation from Meta df to new seurat object
+# ===========================================
+Meta.1066.wo.glia <- Meta.fused[!(rownames(Meta.fused) %in% cells.GLIA.DUBL),]
+cl.conserv <- Meta.1066.wo.glia$cl.conserv
+
+diameter <-Meta.1066.wo.glia$diameter
+names(diameter) <- rownames(Meta.1066.wo.glia)
+
+donor <-Meta.1066.wo.glia$donor
+names(donor) <- rownames(Meta.1066.wo.glia)
+
+drg_level <-Meta.1066.wo.glia$drg_level
+names(drg_level) <- rownames(Meta.1066.wo.glia)
+
+drg_location <-Meta.1066.wo.glia$drg_location
+names(drg_location) <- rownames(Meta.1066.wo.glia)
+
+batch <-Meta.1066.wo.glia$batch
+names(batch) <- rownames(Meta.1066.wo.glia)
+
+Seurat.all.gene$diameter <- diameter
+
+Seurat.all.gene$drg_level <- drg_level
+
+Seurat.all.gene$drg_location <- drg_location
+
+Seurat.all.gene$batch <- batch
+
+Seurat.all.gene$donor <- donor
+
+# ==================================================
+```
+
+
+
+#===========================================================
+## Set Idents before plot
+
+```{r}
+## Set Identity and order for the Seurat object  
+Idents(Seurat.all.gene) <- Seurat.all.gene$cl.conserv_final
+
+#Idents(Seurat.all.gene) <- factor(x = Idents(Seurat.all.gene), levels =c("TRPM8","C.LTMR","NP1","NP2","NP3","PEP1.13","PEP.H4.15","PEP.H4","PEP3","PEP.H5","PEP.H8","PEP.H0","Ad.LTMR","Ab.LTMR","Propr","Un.Gi"))
+
+
+Idents(Seurat.all.gene) <- factor(x = Idents(Seurat.all.gene), levels =c("Un.Gi","Propr","Ab.LTMR","Ad.LTMR","PEP.H0","PEP.H8","PEP.H5","PEP3","PEP.H4","PEP.H4.15","PEP1.13","NP3","NP2","NP1","C.LTMR","TRPM8"))
+```
+
+
+
+##==================================
+## Dotplot 
+
+##Supplementary Figure 6A
+```{r,fig.height=4, fig.width=10}
+library(Seurat)
+library(ggplot2)
+
+# Define the features
+features <- c('ADRA2C', 'AGT', 'CCK', 'GFRA2', 'GFRA3', 'GPR68', 'MRGPRD',  'PIEZO2', 'PROKR2', 'PTGIR', 'SLC17A8', 'TH', 'ZNF521')
+
+# Create the dotplot
+dotplot <- DotPlot(Seurat.all.gene, features = features) + 
+  RotatedAxis() + 
+  theme(axis.text = element_text(size = 10))
+
+# Display the dotplot
+print(dotplot)
+
+# Save the dotplot as an SVG file
+svg_file <- "C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/SF8A_new.svg"
+#ggsave(svg_file, plot = dotplot, device = "svg", height = 4.5, width = 10)
+
+
+```
+
+##Supplementary Figure 7B
+```{r,fig.height=4, fig.width=6}
+## Dotplot itch receptors high enriched
+
+## itch receptor ['HRH1','HRH2','HRH3','HRH4','MRGPRX1','MRGPRX4','HTR2A','HTR7','F2RL1','MRGPRD','CYSLTR2','IL4R','IL13RA1','IL31RA','OSMR','IL7R','CRLF2','IL1RAP','TLR3','TLR7','JAK1']
+
+dotplot <-DotPlot(Seurat.all.gene, features = c('MRGPRX1','MRGPRX4','HRH1','HRH2','F2RL1','MRGPRD','CYSLTR2','IL31RA','OSMR')) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+# Display the dotplot
+print(dotplot)
+
+# Save the dotplot as an SVG file
+svg_file <- "C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/SF9B.svg"
+#ggsave(svg_file, plot = dotplot, device = "svg", height = 4.5, width = 6)
+
+```
+
+##Supplementary Figure 7C
+```{r,fig.height=4, fig.width=5.6}
+## Dotplot itch receptors not high enriched
+
+## itch receptor ['HRH1','HRH2','HRH3','HRH4','MRGPRX1','MRGPRX4','HTR2A','HTR7','F2RL1','MRGPRD','CYSLTR2','IL4R','IL13RA1','IL31RA','OSMR','IL7R','CRLF2','IL1RAP','TLR3','TLR7','JAK1']
+
+dotplot <-DotPlot(Seurat.all.gene, features = c('HRH3','HRH4','HTR2A','HTR7','IL4R','IL13RA1','IL7R','CRLF2','IL1RAP','TLR3','TLR7')) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+
+# Display the dotplot
+print(dotplot)
+
+# Save the dotplot as an SVG file
+svg_file <- "C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/SF9C.svg"
+#ggsave(svg_file, plot = dotplot, device = "svg", height = 4.5, width = 6)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r,fig.height=4, fig.width=10}
+
+## itch receptor ['ADRA2C','AGT', 'ASIC1','CCK','FOXP2','GFRA2','GFRA3','GPR26','GPR68','MRGPRD','MGRPRX4','PIEZO1','PIEZO2','PROKR2','PTFIR','SDC1','SCL17A8','TAC1','TH','TMEM120A','ZNF521']
+
+DotPlot(Seurat.all.gene, features = c('ADRA2C','AGT', 'ASIC1','CCK','FOXP2','GFRA2','GFRA3','GPR26','GPR68','MRGPRD','MRGPRX4','PIEZO1','PIEZO2','PROKR2','PTGIR','SDC1','SLC17A8','TAC1','TH','TMEM120A','ZNF521')) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+```
+```{r,fig.height=4, fig.width=10}
+library(Seurat)
+library(ggplot2)
+
+# Define the features
+features <- c('ADRA2C', 'AGT', 'ASIC1', 'CCK', 'FOXP2', 'GFRA2', 'GFRA3', 'GPR26', 'GPR68', 'MRGPRD', 'MRGPRX4', 'PIEZO1', 'PIEZO2', 'PROKR2', 'PTGIR', 'SDC1', 'SLC17A8', 'TAC1', 'TH', 'TMEM120A', 'ZNF521')
+
+# Create the dotplot
+dotplot <- DotPlot(Seurat.all.gene, features = features) + 
+  RotatedAxis() + 
+  theme(axis.text = element_text(size = 10))
+
+# Display the dotplot
+print(dotplot)
+
+# Save the dotplot as an SVG file
+svg_file <- "C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/SF8A.svg"
+#ggsave(svg_file, plot = dotplot, device = "svg", height = 4, width = 10)
+
+
+```
+
+```{r,fig.height=4, fig.width=10}
+library(Seurat)
+library(ggplot2)
+
+# Define the features
+features <- c('ADRA2C', 'AGT', 'CCK', 'GFRA2', 'GFRA3', 'GPR68', 'MRGPRD',  'PIEZO2', 'PROKR2', 'PTGIR', 'SLC17A8', 'TH', 'ZNF521')
+
+# Create the dotplot
+dotplot <- DotPlot(Seurat.all.gene, features = features) + 
+  RotatedAxis() + 
+  theme(axis.text = element_text(size = 10))
+
+# Display the dotplot
+print(dotplot)
+
+# Save the dotplot as an SVG file
+svg_file <- "C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/SF8A_new.svg"
+#ggsave(svg_file, plot = dotplot, device = "svg", height = 4.5, width = 10)
+
+
+```
+
+
+
+```{r,fig.height=4, fig.width=10}
+## Dotplot itch receptors new identified
+
+## itch receptor ['EDNRA','PTGDR','HTR3A','KCNH6','CHRNA3','KCNG4','CD44','IL6ST','CD74','ILFR','IFNAR1','PLCB3']
+
+dotplot <-DotPlot(Seurat.all.gene, features = c('MRGPRX3','EDNRA','PTGDR','HTR3A','CHRNA3','KCNG4','PLCB3')) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+# Display the dotplot
+print(dotplot)
+
+# Save the dotplot as an SVG file
+svg_file <- "C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/SF9D.svg"
+ggsave(svg_file, plot = dotplot, device = "svg", height = 4, width = 10)
+```
+
+```
+
+```{r,fig.height=4, fig.width=5}
+## Dotplot example
+
+DotPlot(Seurat.all.gene, features = c('IL31RA', 'JAK1', 'OSMR', 'SST', 'GFRA3', 'HRH1', 'NOS1', 'OPRM1','DDAH1')) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+```
+
+
+
+```{r,fig.height=4, fig.width=5}
+## Dotplot example
+#TRPM8 ['STUM', 'TRPM8', 'ENTPD3', 'WSB2', 'PCDH9', CA8', 'SEMA3F', 'KCNK3', 'SIRPA', 'LIMCH1']
+#C.LTMR ['CASQ2', 'ZNF521', 'GREM1', 'SERPINA1', 'P2RY1', 'ADGRG1', 'SLIT1', 'RSPO2', 'CNTNAP5', 'DPP6']
+#NP1 ['CDH1', 'GFRA2', 'SCN11A', 'MRGPRX1', 'AHNAK', 'OSMR', 'CADPS', 'PLCB3', 'CD24', 'NRCAM']
+#NP2 ['MRGPRX4',	'MRGPRX3',	'RASSF6',	'GFRA1',	'TIMELESS',	'KCNK18',	'CEMIP',	'IGSF3',	'SCN3B',	'FSTL1']
+#NP3 ['SST',	'HTR3A',	'GFRA3',	'CCK',	'CHRNA3',	'IL31RA',	'CALCB',	'NOS1',	'FKBP1B',	'DGKH']
+#PEP1.3 ['TAC1',	'SCRG1',	'ATP2B4',	'TRPA1',	'TMBIM1',	'CALCA',	'LITAF',	'CAMK4',	'CELF4',	'UCP2']
+#PEPH4.15['AQP1',	'ATP2B4',	'VAT1',	'SPEG',	'TAC1',	'OPRM1', 'RELN',	'PTPRT',	'NCAM1',	'RIMS3']
+#PEPH4 ['TSPAN18',	'EHD3',	'CAMK1D',	'NTRK1',	'SYT6',	'SYNPO',	'TTL',	'VAT1L',	'LYNX1',	'PCDH9']
+#PEP3 ['KIT',	'TMEM273',	'TSPAN33',	'DOC2A',	'SCG2',	'GLDN',	'SLC7A14',	'MME',	'OPCML',	'BCAM']
+#PEPH5 ['CHRNA7',	'CST3',	'CD9',	'AKR1C2',	'CPNE4',	'RBFOX3',	'NGFR',	'NTRK1',	'HBA2',	'AQP1']
+#PEPH8 ['NTRK3','ELMO1',	'S100A4',	'SUSD2',	'NGFR',	'NPTX1',	'CPNE6',	'S100A16',	'PCP4',	'P2RX3']
+#PEPH0 ['LXN',	'TMEM273',	'FABP3',	'NDUFA4',	'NMB', 'CST3', 'EXOC1L', 'SLC7A14', 'TMBIM1','SCG2']
+#Ad.LTMR ['SCN5A',	'KCNV1',	'PCDH7',	'DCHS2',	'KCNAB1',	'PLXNA2',	'GPX2',	'CBLN2',	'NTRK2'	,'KIRREL3']
+#Ab.LTMR ['SFRP1',	'NEFL',	'SPP1',	'NEFH',	'S100B',	'NEFM',	'BAIAP2L1',	'MDH1',	'MAP7D2',	'CPNE6']
+#Propr ['REEP5',	'ATP11A',	'WLS',	'KANK4',	'PVALB',	'MCTP2',	'GPRC5B',	'SPP1',	'SLIT2',	'OXR1']
+#Un.Gi ['TRIM54',	'ATF3',	'SEMA6A',	'ADCYAP1',	'UCN',	'GADD45A',	'FLRT3',	'FAM171B',	'MCAM',	'ANO5']
+
+
+
+
+
+
+
+#TRPM8_common ['TRPM8', 'PCDH9','SLC24A2', 'NTRK2', 'HTRA1', 'MAP2', 'PCSK1']
+#TRPM8_unique ['STUM', 'ENTPD3', 'KCNK3', 'SLC2A13', 'CA8', 'LDHA', 'ASIC1', 'LIMCH1', 'SPON1', 'SEMA3F', 'CACNA1D']
+
+DotPlot(Seurat.all.gene, features = c('STUM', 'TRPM8', 'ENTPD3', 'WSB2', 'PCDH9', 'CA8', 'SEMA3F', 'KCNK3', 'SIRPA', 'LIMCH1'), dot.scale = 6) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+
+```
+```{r,fig.height=1.56, fig.width=1.07}
+# ['TRPM8', 'PCDH9','SLC24A2', 'NTRK2', 'HTRA1', 'MAP2', 'PCSK1']
+
+
+DotPlot(Seurat.all.gene, features = c('STUM', 'TRPM8', 'ENTPD3', 'WSB2', 'PCDH9', 'CA8', 'SEMA3F', 'KCNK3', 'SIRPA', 'LIMCH1'), dot.scale = 6) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+
+```
+
+
+```{r,fig.height=1.56, fig.width=1.07}
+DotPlot(Seurat.all.gene, features = c('TRIM54',	'ATF3',	'SEMA6A',	'ADCYAP1',	'UCN',	'GADD45A',	'FLRT3',	'FAM171B',	'MCAM',	'ANO5'), dot.scale = 2,cols = c("lightgrey", "red")) + RotatedAxis() + theme(axis.text = element_blank()) + theme(axis.title = element_blank()) + theme(legend.position="none") + theme(axis.text.x = element_blank()) + theme(axis.line.x.bottom=element_line(size=0.15))+theme(axis.line.y.left =element_line(size=0.15))+theme(axis.ticks = element_line( size = 0.15))
+
+images = DotPlot(Seurat.all.gene, features = c('TRIM54',	'ATF3',	'SEMA6A',	'ADCYAP1',	'UCN',	'GADD45A',	'FLRT3',	'FAM171B',	'MCAM',	'ANO5'), dot.scale = 2,cols = c("lightgrey", "red")) + RotatedAxis() + theme(axis.text = element_blank()) + theme(axis.title = element_blank()) + theme(legend.position="none") + theme(axis.text.x = element_blank())+ theme(axis.line.x.bottom=element_line(size=0.2))+theme(axis.line.y.left=element_line(size=0.2))+theme(axis.ticks = element_line(size = 0.2))+theme(axis.ticks.length=unit(.05, "cm"))
+
+#ggsave(file = "C:/Users/huash/Desktop/myplot.svg", plot=images)
+
+```
+
+```{r,fig.height=3, fig.width=3}
+
+images = DotPlot(Seurat.all.gene, features = c('STUM', 'TRPM8', 'ENTPD3', 'WSB2', 'PCDH9', 'CA8', 'SEMA3F', 'KCNK3', 'SIRPA', 'LIMCH1'), dot.scale = 2,cols = c("lightgrey", "red")) + RotatedAxis() + theme(axis.text = element_text(size = 10)) 
+ggsave(file = "C:Users/huash/OneDrive/Desktop/myplot.svg", plot=images)
+images
+
+```

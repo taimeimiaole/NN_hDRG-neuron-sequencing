@@ -1,0 +1,653 @@
+---
+title: "Untitled"
+author: "H. Yu"
+date: "2/24/2024"
+output: html_document
+---
+
+```{r}
+library(Seurat)
+library(ggplot2)
+library(dplyr)
+library(plyr)
+library(RColorBrewer) # good sets of color to replace default Seurat colors for better contrast
+
+```
+
+
+```{r cars}
+
+
+csv_file_path = "C:/Users/huash/OneDrive/Desktop/hDRG_gene_expression_matrix_main_other_markers_Seurat.csv"
+
+metadat_path = "C:/Users/huash/OneDrive/Desktop/hDRG_gene_expression_matrix_metadata_new.csv"
+
+data <- read.csv(csv_file_path, header = TRUE, sep = ",", row.names = 1)
+
+metadata <- read.csv(metadat_path, header = TRUE, sep = ",", row.names = 1)
+
+# Create Seurat object
+pbmc <- CreateSeuratObject(counts = data, project = "pbmc3k")
+
+# Add metadata to the Seurat object
+pbmc <- AddMetaData(pbmc, metadata = metadata)
+```
+
+
+```{r}
+pbmc <- NormalizeData(pbmc, normalization.method = "LogNormalize", scale.factor = 10000)
+```
+
+
+
+
+```{r}
+pbmc <- FindVariableFeatures(pbmc, selection.method = "vst", nfeatures = 100)
+```
+
+```{r}
+all.genes <- rownames(pbmc)
+pbmc <- ScaleData(pbmc, features = all.genes)
+```
+
+
+```{r}
+pbmc <- RunPCA(pbmc, features = VariableFeatures(object = pbmc))
+
+```
+
+
+```{r}
+pbmc <- FindNeighbors(pbmc, dims = 1:10)
+pbmc <- FindClusters(pbmc, resolution =2.5)
+```
+
+```{r}
+pbmc <- RunUMAP(pbmc, dims = 1:10)
+```
+
+
+
+```{r, fig.width=4, fig.height=3}
+library(Seurat)
+
+# Assuming 'Seurat.integr.3000' is your Seurat object and clustering has been performed
+
+# Access cluster identities
+cluster_ids <- Idents(pbmc)
+
+# Count the number of cells in each cluster
+cluster_counts <- table(cluster_ids)
+
+# Calculate the percentage of cells in each cluster
+total_cells <- sum(cluster_counts)
+cluster_percentages <- cluster_counts / total_cells * 100
+
+# Prepare the output with cluster names, counts, and percentages
+output <- paste(names(cluster_counts), ": ", cluster_counts, " (", sprintf("%.2f%%", cluster_percentages), ")", sep="")
+
+# Print the output
+cat(output, sep="\n")
+
+
+
+```
+
+
+```{r}
+## Get cell identity of each Seurat cluster
+cl0_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='0',])
+cl1_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='1',])
+cl2_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='2',])
+cl3_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='3',])
+cl4_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='4',])
+cl5_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='5',])
+cl6_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='6',])
+cl7_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='7',])
+cl8_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='8',])
+cl9_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='9',])
+cl10_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='10',])
+cl11_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='11',])
+cl12_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='12',])
+cl13_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='13',])
+cl14_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='14',])
+cl15_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='15',])
+cl16_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='16',])
+#cl17_cell <- row.names(pbmc[[]][pbmc[[]]$seurat_clusters=='17',])
+
+
+```
+
+```{r}
+## cl.Ab.split.2 C0-Propr C1-NP1 C2-PEP.H0 C3-PEP.H0 C4-PEP.H8 C5-Ab.LTMR C6-PEP.H5 C7-Ab.LTMR C8-PEP.H4 C9-PEP1.13 C10-NP1 C11-Ad.LTMR C12-NP3 C13-Ad.LTMR C14-PEP3 C15-PEP.H4.15 C16-NP2 C17-C.LTMR C18-Un.Gi
+
+random_group_labels <- sample(x = c("hTRPM8","hPropr","hAb.LTMR.s22","hAb.LTMR","hAd.LTMR","hPEP.0","hPEP.NTRK3","hPEP.CHRNA7","hPEP.KIT","hPEP.PIEZOh","hPEP.TRPV1/A1.2","hPEP.TRPV1/A1.1","hPEP.SST","hNP2","hNP1"), size = ncol(x = pbmc), replace = TRUE)
+pbmc$cell_type <- random_group_labels
+               
+pbmc$cell_type[cl0_cell] <- "hNP1"
+pbmc$cell_type[cl1_cell] <- "hPEP.TRPV1/A1.2"
+pbmc$cell_type[cl2_cell] <- "hPEP.TRPV1/A1.1"
+pbmc$cell_type[cl3_cell] <- "hSST"
+pbmc$cell_type[cl4_cell] <- "hPEP.PIEZOh"
+pbmc$cell_type[cl5_cell] <- "hNP1"
+pbmc$cell_type[cl6_cell] <- "hAd.LTMR"
+pbmc$cell_type[cl7_cell] <- "hPEP.KIT"
+pbmc$cell_type[cl8_cell] <- "hAb.LTMR"
+pbmc$cell_type[cl9_cell] <- "hPEP.CHRNA7"
+pbmc$cell_type[cl10_cell] <- "hPEP.NTRK3"
+pbmc$cell_type[cl11_cell] <- "unidentified"
+pbmc$cell_type[cl12_cell] <- "hPropr"
+pbmc$cell_type[cl13_cell] <- "hAd.LTMR"
+pbmc$cell_type[cl14_cell] <- "hPEP0"
+pbmc$cell_type[cl15_cell] <- "hNP2"
+pbmc$cell_type[cl16_cell] <- "hTRPM8"
+
+
+```
+
+```{r}
+## cl.Ab.split.2 C0-Propr C1-NP1 C2-PEP.H0 C3-PEP.H0 C4-PEP.H8 C5-Ab.LTMR C6-PEP.H5 C7-Ab.LTMR C8-PEP.H4 C9-PEP1.13 C10-NP1 C11-Ad.LTMR C12-NP3 C13-Ad.LTMR C14-PEP3 C15-PEP.H4.15 C16-NP2 C17-C.LTMR C18-Un.Gi
+
+hATF3 <- c("Neuron463", "Neuron558", "Neuron654", "Neuron657", "Neuron663", "Neuron950", "Neuron952", "Neuron1061", "Neuron1071", "Neuron1183", "Neuron1187", "Neuron1269", "Neuron1312", "Neuron1360")
+
+hC.LTMR <- c("Neuron119", "Neuron126", "Neuron846", "Neuron1174", "Neuron1371", "Neuron1375", "Neuron1379")
+
+
+
+#cl3_cell_new <- cl3_cell
+#cl3_cell_new %in% cl.TRPM8
+#cl3_cell_new <- cl3_cell_new[! cl3_cell_new %in% cl.TRPM8]
+
+
+cl8_cell_new <- cl8_cell[! cl8_cell %in% hATF3]
+cl0_cell_new <- cl0_cell[! cl0_cell %in% hC.LTMR]
+cl5_cell_new <- cl5_cell[! cl5_cell %in% hC.LTMR]
+
+
+random_group_labels <- sample(x = c("hATF3","hC.LTMR","hTRPM8","hPropr","hAb.LTMR.s22","hAb.LTMR","hAd.LTMR","hPEP.0","hPEP.NTRK3","hPEP.CHRNA7","hPEP.KIT","hPEP.PIEZOh","hPEP.TRPV1/A1.2","hPEP.TRPV1/A1.1","hPEP.SST","hNP2","hNP1"), size = ncol(x = pbmc), replace = TRUE)
+pbmc$cell_type_manual <- random_group_labels
+
+pbmc$cell_type_manual[cl0_cell_new] <- "hNP1"
+pbmc$cell_type_manual[cl1_cell] <- "hPEP.TRPV1/A1.2"
+pbmc$cell_type_manual[cl2_cell] <- "hPEP.TRPV1/A1.1"
+pbmc$cell_type_manual[cl3_cell] <- "hSST"
+pbmc$cell_type_manual[cl4_cell] <- "hPEP.PIEZOh"
+pbmc$cell_type_manual[cl5_cell_new] <- "hNP1"
+pbmc$cell_type_manual[cl6_cell] <- "hAd.LTMR"
+pbmc$cell_type_manual[cl7_cell] <- "hPEP.KIT"
+pbmc$cell_type_manual[cl8_cell_new] <- "hAb.LTMR"
+pbmc$cell_type_manual[cl9_cell] <- "hPEP.CHRNA7"
+pbmc$cell_type_manual[cl10_cell] <- "hPEP.NTRK3"
+pbmc$cell_type_manual[cl11_cell] <- "unidentified"
+pbmc$cell_type_manual[cl12_cell] <- "hPropr"
+pbmc$cell_type_manual[cl13_cell] <- "hAd.LTMR"
+pbmc$cell_type_manual[cl14_cell] <- "hPEP.0"
+pbmc$cell_type_manual[cl15_cell] <- "hNP2"
+pbmc$cell_type_manual[cl16_cell] <- "hTRPM8"
+pbmc$cell_type_manual[hATF3] <- "hATF3"
+pbmc$cell_type_manual[hC.LTMR] <- "hC.LTMR"
+
+
+
+```
+
+
+```{r}
+random_group_labels <- sample(x = c("NP","PEP",'NF','TRPM8'), size = ncol(x = pbmc), replace = TRUE)
+pbmc$large_group <- random_group_labels
+
+pbmc$large_group[cl0_cell_new] <- "NP"
+pbmc$large_group[cl1_cell] <- "PEP"
+pbmc$large_group[cl2_cell] <- "PEP"
+pbmc$large_group[cl3_cell] <- "NP"
+pbmc$large_group[cl4_cell] <- "PEP"
+pbmc$large_group[cl5_cell_new] <- "NP"
+pbmc$large_group[cl6_cell] <- "NF"
+pbmc$large_group[cl7_cell] <- "PEP"
+pbmc$large_group[cl8_cell_new] <- "NF"
+pbmc$large_group[cl9_cell] <- "PEP"
+pbmc$large_group[cl10_cell] <- "PEP"
+pbmc$large_group[cl11_cell] <- "unidentified"
+pbmc$large_group[cl12_cell] <- "NF"
+pbmc$large_group[cl13_cell] <- "NF"
+pbmc$large_group[cl14_cell] <- "PEP"
+pbmc$large_group[cl15_cell] <- "NP"
+pbmc$large_group[cl16_cell] <- "TRPM8"
+pbmc$large_group[hATF3] <- "NF"
+pbmc$large_group[hC.LTMR] <- "NP"
+
+```
+
+
+
+```{r}
+## Set Identity and order for the Seurat object  
+## level_old.1 ["NP1","NP2","NP3","PEP1.13","PEP.H4.15","PEP.H4","PEP3","PEP.H5","PEP.H8","PEP.H0","Ad.LTMR","Ab.LTMR","Propr","C.LTMR","TRPM8","Un.Gi"]
+
+
+Idents(pbmc) <- pbmc$cell_type_manual
+
+Idents(pbmc) <- factor(x = Idents(pbmc), levels =c("hTRPM8","hC.LTMR","hNP1","hNP2","hSST","hPEP.TRPV1/A1.1","hPEP.TRPV1/A1.2","hPEP.PIEZOh","hPEP.KIT","hPEP.CHRNA7","hPEP.NTRK3","hPEP.0","hAd.LTMR","hAb.LTMR","hPropr","hATF3","unidentified"))
+```
+
+
+
+```{r}
+## assign color for each Seurat cluster
+
+## level_old.1 ['#6666FF','#00a9ff','#8494ff','#c77cff','#ff66b2','#ff9933','#ff68a1','#ff3333','#ed68ed','#dcc66e','#0cb702','#aba300','#7cae00','#FF99FF','#00b8e7','#928e8f']
+
+
+XX.color.cell_type_manual=c('#00b8e7','#FF99FF','#6666FF','#00a9ff','#8494ff','#c77cff','#ff66b2','#ff9933','#ff68a1','#ff3333','#ed68ed','#dcc66e','#0cb702','#aba300','#7cae00','#928e8f','gray')
+
+```
+
+```{r}
+DimPlot(pbmc,group.by = "cell_type_manual",label = F, cols = XX.color.cell_type_manual, order =c('unidentified',"hATF3","hPropr","hAb.LTMR","hAd.LTMR","hPEP.0","hPEP.NTRK3","hPEP.CHRNA7","hPEP.KIT","hPEP.PIEZOh","hPEP.TRPV1/A1.2","hPEP.TRPV1/A1.1","hSST","hNP2","hNP1","hC.LTMR", "hTRPM8"))
+```
+
+
+
+```{r}
+cluster_ids <- Idents(pbmc)
+
+# Count the number of cells in each cluster
+cluster_counts <- table(cluster_ids)
+
+# Print the number of cells in each cluster
+print(cluster_counts)
+```
+
+###### Xenium data after removing "unidentified" cells
+```{r}
+# Assuming `seurat_object` is your original Seurat object
+# and 'cell_type_manual' is the metadata column with cell types
+
+# 1. Identify cells that are not 'unidentified'
+cells_to_keep <- WhichCells(pbmc, expression = cell_type_manual != "unidentified")
+
+# 2. Subset the Seurat object to keep only the cells that are not 'unidentified'
+seurat_object_filtered <- subset(pbmc, cells = cells_to_keep)
+
+# Now, `seurat_object_filtered` contains only the cells that are not 'unidentified'
+```
+
+
+```{r}
+DimPlot(seurat_object_filtered,group.by = "cell_type_manual",label = F, cols = XX.color.cell_type_manual, order =c('unidentified',"hATF3","hPropr","hAb.LTMR","hAd.LTMR","hPEP.0","hPEP.NTRK3","hPEP.CHRNA7","hPEP.KIT","hPEP.PIEZOh","hPEP.TRPV1/A1.2","hPEP.TRPV1/A1.1","hSST","hNP2","hNP1","hC.LTMR", "hTRPM8"))
+```
+
+
+##=========================================================================
+##Figure plot
+
+#Figure 4C
+```{r}
+F4C <- DimPlot(seurat_object_filtered,group.by = "cell_type_manual",label = F, cols = XX.color.cell_type_manual, order =c('unidentified',"hATF3","hPropr","hAb.LTMR","hAd.LTMR","hPEP.0","hPEP.NTRK3","hPEP.CHRNA7","hPEP.KIT","hPEP.PIEZOh","hPEP.TRPV1/A1.2","hPEP.TRPV1/A1.1","hSST","hNP2","hNP1","hC.LTMR", "hTRPM8"))
+  
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/F4C.svg", plot = F4C, device = "svg",width = 8.3, height = 4.8 )
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r, fig.width=20, fig.height=50}
+VlnPlot(
+  seurat_object_filtered,
+  c("STUM", "TRPM8", "ENTPD3", "CASQ2", "SERPINA1", "P2RY1", "MRGPRX1", "SCN11A", "CDH1", "OSMR", "IL31RA", "MRGPRX3", "MRGPRX4", "MRGPRD", "GFRA2", "SST", "CCK", "GFRA3", "SCRG1", "TRPV1", "TRPA1", "PTGER3", "TAC1", "ATP2B4", "KIT", "TMEM273", "DOC2A", "CHRNA7", "CST3", "CPNE4", "S100A4", "S100A16", "PCP4", "KCNV1", "PCDH7", "SFRP1", "NEFL", "NTRK3", "REEP5", "WLS", "PVALB", "ATF3", "UCN", "SEMA6A", "ADCYAP1", "PIEZO1", "PIEZO2", "GPR68", "EHD3","NTRK2","NTRK3", "CALCA"),
+  slot = "counts",
+  cols = XX.color.cell_type_manual,
+  pt.size = 0.0,
+)
+```
+
+
+
+```{r}
+write.csv(seurat_object_filtered[[]], "E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Human TG sequencing and Migraine/Xenium/gene expression matrix/hDRG_gene_expression_matrix_metadata_seurat_filtered.csv")
+```
+
+```{r}
+normalized_data <- GetAssayData(object = seurat_object_filtered, slot = "data")
+write.csv(as.data.frame(normalized_data), file = "E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Human TG sequencing and Migraine/Xenium/gene expression matrix/hDRG_gene_normalized_expression_matrix.csv")
+```
+
+
+
+
+
+
+
+
+
+
+######Single-soma data
+
+
+
+```{r, fig.width=10, fig.height=30}
+
+single_soma <- read.csv("E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Project data/Sequencing data/HS.counts.raw.csv", header = TRUE, sep = ",", row.names = 1)          
+
+
+
+```
+
+
+```{r, fig.width=10, fig.height=30}
+
+# Extract indices from dataframe A
+indices_A <- rownames(data)
+
+# Extract rows from dataframe B where indices match with A
+single_soma_87_genes <- single_soma[rownames(single_soma) %in% indices_A, ]
+
+```
+
+```{r, fig.width=10, fig.height=30}
+single_soma_metadata <- read.csv("E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Project data/Sequencing data/human_drg_meta_data_final_new name_1136_final_name.csv", header = TRUE, sep = ",", row.names = 1)
+
+
+```
+
+
+
+
+
+```{r, fig.width=10, fig.height=30}
+single_soma_87_seurat <- CreateSeuratObject(counts = single_soma_87_genes, metadata=single_soma_metadata, project = "sing")
+
+```
+
+
+```{r, fig.width=10, fig.height=30}
+single_soma_87_seurat <- NormalizeData(single_soma_87_seurat, normalization.method = "LogNormalize", scale.factor = 10000)
+single_soma_87_seurat <- FindVariableFeatures(single_soma_87_seurat, selection.method = "vst", nfeatures = 100)
+all.genes <- rownames(single_soma_87_seurat)
+single_soma_87_seurat <- ScaleData(single_soma_87_seurat, features = all.genes)
+single_soma_87_seurat <- RunPCA(single_soma_87_seurat, features = VariableFeatures(object = single_soma_87_seurat))
+single_soma_87_seurat <- FindNeighbors(single_soma_87_seurat, dims = 1:10)
+single_soma_87_seurat <- FindClusters(single_soma_87_seurat, resolution =2.5)
+single_soma_87_seurat <- RunUMAP(single_soma_87_seurat, dims = 1:10)
+
+```
+
+```{r}
+DimPlot(single_soma_87_seurat, reduction = "umap")
+```
+
+
+
+```{r, fig.width=10, fig.height=30}
+VlnPlot(
+  single_soma_87_seurat,
+  c("STUM", "TRPM8", "ENTPD3", "CASQ2", "SERPINA1", "P2RY1", "MRGPRX1", "SCN11A", "CDH1", "OSMR", "IL31RA", "MRGPRX3", "MRGPRX4", "MRGPRD", "GFRA2", "SST", "CCK", "GFRA3", "SCRG1", "TRPV1", "TRPA1", "PTGER3", "TAC1", "ATP2B4", "KIT", "TMEM273", "DOC2A", "CHRNA7", "CST3", "CPNE4", "S100A4", "S100A16", "PCP4", "KCNV1", "PCDH7", "SFRP1", "NEFL", "NTRK3", "REEP5", "WLS", "PVALB", "ATF3", "UCN", "SEMA6A", "ADCYAP1", "PIEZO1", "PIEZO2", "GPR68", "EHD3","NTRK2","NTRK3", "CALCA"),
+  slot = "counts",
+  pt.size = 0.0,
+)
+```
+
+
+
+
+```{r}
+library(Seurat)
+library(ggplot2)
+library(dplyr)
+library(plyr)
+library(RColorBrewer) # good sets of color to replace default Seurat colors for better contrast
+```
+
+```{r}
+## load expression matrix and meta data from Dmitry
+load("E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Hs_LCM_Seurat_export_slim.RData")
+```
+
+```{r}
+# splitting dataset into samples for anchor integration
+counts.N2.RL5 <- single_soma_87_genes[,grepl("N2.RL5", colnames(single_soma_87_genes))]
+counts.N2.RT1 <- single_soma_87_genes[,grepl("N2.RT1", colnames(single_soma_87_genes))]
+counts.N3.RL2 <- single_soma_87_genes[,grepl("N3.RL2", colnames(single_soma_87_genes))]
+counts.N3.RT1 <- single_soma_87_genes[,grepl("N3.RT1", colnames(single_soma_87_genes))]
+counts.N4.RL3 <- single_soma_87_genes[,grepl("N4.RL3", colnames(single_soma_87_genes))]
+counts.N4.RT1 <- single_soma_87_genes[,grepl("N4.RT1", colnames(single_soma_87_genes))]
+
+cdl.1 <- list('N2.RL5'=as(as.matrix(counts.N2.RL5),'dgCMatrix'),
+              'N2.RT1'=as(as.matrix(counts.N2.RT1),'dgCMatrix'),
+              'N3.RL2'=as(as.matrix(counts.N3.RL2),'dgCMatrix'),
+              'N3.RT1'=as(as.matrix(counts.N3.RT1),'dgCMatrix'),
+              'N4.RL3'=as(as.matrix(counts.N4.RL3),'dgCMatrix'),
+              'N4.RT1'=as(as.matrix(counts.N4.RT1),'dgCMatrix')
+)
+```
+
+```{r}
+# Assuming cells.GLIA.DUBL is your list
+
+# Define a function to replace "-" with "."
+replace_dash <- function(x) {
+  gsub("-", ".", x)
+}
+
+# Apply the function to each element of the list
+cells.GLIA.DUBL <- lapply(cells.GLIA.DUBL, replace_dash)
+```
+
+
+```{r}
+# removing 'GLIA.DUBLETS' cells from all samples, GLIA, DUBLTETS are annotated by Dmitry based on his analysis
+for (i in 1:length(cdl.1)){
+  cdl.1[[i]] <- cdl.1[[i]][,!(colnames(cdl.1[[i]]) %in% cells.GLIA.DUBL)]
+}
+
+```
+
+```{r}
+# creating a list of seurat objects corresponding to samples
+Seurat.list <- NULL
+for (i in 1:length(cdl.1)){
+  Seurat.list[[i]] <- CreateSeuratObject(counts = cdl.1[[i]])
+}
+```
+
+
+```{r}
+#normalizing & finding variable genes for individual seurat objects
+for (i in 1:length(Seurat.list)) {
+  Seurat.list[[i]] <- NormalizeData(Seurat.list[[i]], verbose = T)
+  Seurat.list[[i]] <- FindVariableFeatures(Seurat.list[[i]], selection.method = "vst",
+                                            verbose = T)
+}
+```
+
+```{r}
+# integration
+features <- SelectIntegrationFeatures(object.list = Seurat.list)
+S.anchors <- FindIntegrationAnchors(object.list = Seurat.list, anchor.features = features)
+```
+
+```{r}
+# integration
+to_integrate <- c(row.names(HS.counts.raw))
+#to_integrate <- Reduce(intersect, lapply(S.anchors@object.list, rownames))
+Seurat.integr <- IntegrateData(anchorset = S.anchors, k.weight = 80, features.to.integrate = to_integrate)
+```
+
+
+```{r}
+rownames(single_soma_metadata) <- gsub("-", ".", rownames(single_soma_metadata))
+Seurat.integr <- AddMetaData(object = Seurat.integr, metadata = single_soma_metadata)
+```
+
+
+```{r}
+# clustering 
+DefaultAssay(Seurat.integr) <- "integrated"
+Seurat.integr <- ScaleData(Seurat.integr, verbose = T, features)
+Seurat.integr <- RunPCA(Seurat.integr, verbose = F)
+Seurat.integr <- RunUMAP(Seurat.integr, dims = 1:nn.pcs, verbose = T)
+Seurat.integr <- FindNeighbors(Seurat.integr, dims = 1:nn.pcs, verbose = T)
+
+#resolution = 4.5 for
+Seurat.integr <- FindClusters(Seurat.integr, resolution =3.4, verbose = T)
+DimPlot(Seurat.integr, group.by = "seurat_clusters", label = T)
+```
+
+
+```{r}
+## Set Identity and order for the Seurat object  
+## level_old.1 ["NP1","NP2","NP3","PEP1.13","PEP.H4.15","PEP.H4","PEP3","PEP.H5","PEP.H8","PEP.H0","Ad.LTMR","Ab.LTMR","Propr","C.LTMR","TRPM8","Un.Gi"]
+
+
+Idents(Seurat.integr) <- Seurat.integr$cluster
+
+Idents(Seurat.integr) <- factor(x = Idents(Seurat.integr), levels =c("hTRPM8","hC.LTMR","hNP1","hNP2","hPEP.SST","hPEP.TRPV1/A1.1","hPEP.TRPV1/A1.2","hPEP.PIEZOh","hPEP.KIT","hPEP.CHRNA7","hPEP.NTRK3","hPEP.0","hAd.LTMR","hAb.LTMR","hPropr","hATF3"))
+```
+
+
+
+
+```{r}
+# clustering )
+DimPlot(Seurat.integr, group.by = "cluster", label = F, cols = XX.color.cell_type_manual, order =c("hATF3","hPropr","hAb.LTMR","hAd.LTMR","hPEP.0","hPEP.NTRK3","hPEP.CHRNA7","hPEP.KIT","hPEP.PIEZOh","hPEP.TRPV1/A1.2","hPEP.TRPV1/A1.1","hPEP.SST","hNP2","hNP1","hC.LTMR", "hTRPM8"))
+
+```
+
+
+```{r, fig.width=12, fig.height=25}
+VlnPlot(
+  Seurat.integr,
+  c("STUM", "TRPM8", "ENTPD3", "CASQ2", "SERPINA1", "P2RY1", "MRGPRX1", "SCN11A", "CDH1", "OSMR", "IL31RA", "MRGPRX3", "MRGPRX4", "MRGPRD", "GFRA2", "SST", "CCK", "GFRA3", "SCRG1", "TRPV1", "TRPA1", "PTGER3", "TAC1", "ATP2B4", "KIT", "TMEM273", "DOC2A", "CHRNA7", "CST3", "CPNE4", "S100A4", "S100A16", "PCP4", "KCNV1", "PCDH7", "SFRP1", "NEFL", "NTRK3", "REEP5", "WLS", "PVALB", "ATF3", "UCN",'PIEZO2', "CALCA"),
+  slot = "counts",
+  pt.size = 0.0,
+)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r, fig.width=10, fig.height=30}
+Seurat.integr_new_parameters <- Seurat.integr
+
+Seurat.integr_new_parameters <- ScaleData(Seurat.integr_new_parameters, features = all.genes)
+Seurat.integr_new_parameters <- RunPCA(Seurat.integr_new_parameters, features = VariableFeatures(object = Seurat.integr_new_parameters))
+Seurat.integr_new_parameters <- FindNeighbors(Seurat.integr_new_parameters, dims = 1:10)
+Seurat.integr_new_parameters <- FindClusters(Seurat.integr_new_parameters, resolution =2.5)
+Seurat.integr_new_parameters <- RunUMAP(Seurat.integr, dims = 1:10)
+
+```
+
+
+
+
+
+
+```{r}
+DimPlot(Seurat.integr_new_parameters, group.by = "seurat_clusters", label = T)
+```
+
+```{r, fig.width=12, fig.height=25}
+VlnPlot(
+  Seurat.integr_new_parameters,
+  c("STUM", "TRPM8", "ENTPD3", "CASQ2", "SERPINA1", "P2RY1", "MRGPRX1", "SCN11A", "CDH1", "OSMR", "IL31RA", "MRGPRX3", "MRGPRX4", "MRGPRD", "GFRA2", "SST", "CCK", "GFRA3", "SCRG1", "TRPV1", "TRPA1", "PTGER3", "TAC1", "ATP2B4", "KIT", "TMEM273", "DOC2A", "CHRNA7", "CST3", "CPNE4", "S100A4", "S100A16", "PCP4", "KCNV1", "PCDH7", "SFRP1", "NEFL", "NTRK3", "REEP5", "WLS", "PVALB", "ATF3", "UCN", "CALCA"),
+  slot = "counts",
+  pt.size = 0.0,
+)
+```
+
+
+
+
+```{r}
+## load Seurat object for downstream data analysis
+load("C:/Users/huash/Downloads/hist_plot_data_and_function_hy.RData")
+```

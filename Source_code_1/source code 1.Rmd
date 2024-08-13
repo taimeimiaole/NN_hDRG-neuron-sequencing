@@ -1,0 +1,1128 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+##===================================
+## Create Seurat object from raw data
+
+```{r}
+library(Seurat)
+library(ggplot2)
+library(dplyr)
+library(plyr)
+library(RColorBrewer) # good sets of color to replace default Seurat colors for better contrast
+```
+
+
+##===========================================================
+## Plot for published figure, the Seurat.integr.3000 can be generated from previous codes ('hDRG_neurons_final_generate_Serurat_object_from_raw_data.Rmd'), to save time, it can be load from saved files
+
+
+```{r}
+## load Seurat object for downstream data analysis
+load("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/Source data/Source code and data/Source code 1/Hs_LCM_final.Rdata")
+```
+
+
+```{r}
+## Set Identity and order for the Seurat object  
+## level_old.1 ["NP1","NP2","NP3","PEP1.13","PEP.H4.15","PEP.H4","PEP3","PEP.H5","PEP.H8","PEP.H0","Ad.LTMR","Ab.LTMR","Propr","C.LTMR","TRPM8","Un.Gi"]
+
+
+Idents(Seurat.integr.3000) <- Seurat.integr.3000$cl.conserv_final
+
+Idents(Seurat.integr.3000) <- factor(x = Idents(Seurat.integr.3000), levels =c("hTRPM8","hC.LTMR","hNP1","hNP2","hPEP.SST","hPEP.TRPV1/A1.1","hPEP.TRPV1/A1.2","hPEP.PIEZOh","hPEP.KIT","hPEP.CHRNA7","hPEP.NTRK3","hPEP.0","hAd.LTMR","hAb.LTMR","hPropr","hATF3"))
+```
+
+
+
+```{r}
+## assign color for each Seurat cluster
+
+## level_old.1 ['#6666FF','#00a9ff','#8494ff','#c77cff','#ff66b2','#ff9933','#ff68a1','#ff3333','#ed68ed','#dcc66e','#0cb702','#aba300','#7cae00','#FF99FF','#00b8e7','#928e8f']
+
+
+XX.color.Paired.cl.conserv_final=c('#00b8e7','#FF99FF','#6666FF','#00a9ff','#8494ff','#c77cff','#ff66b2','#ff9933','#ff68a1','#ff3333','#ed68ed','#dcc66e','#0cb702','#aba300','#7cae00','#928e8f')
+
+```
+
+
+
+
+##=========================================================================
+##Figure plot
+
+#Figure 1B
+```{r}
+## cluster_old.1 ["Un.Gi","TRPM8","C.LTMR", "Propr","Ab.LTMR","Ad.LTMR","PEP.H0","PEP.H8","PEP.H5","PEP3","PEP.H4","PEP.H4.15","PEP1.13","NP3","NP2","NP1"]
+
+DimPlot(Seurat.integr.3000, group.by = "cl.conserv_final",label = F, cols = XX.color.Paired.cl.conserv_final, order = c('hATF3', 'hPropr', 'hAb.LTMR', 'hAd.LTMR', 'hPEP.0', 'hPEP.NTRK3', 'hPEP.CHRNA7', 'hPEP.KIT', 'hPEP.PIEZOh', 'hPEP.TRPV1/A1.2', 'hPEP.TRPV1/A1.1', 'hPEP.SST', 'hNP2', 'hNP1',  'hC.LTMR', 'hTRPM8'))
+
+DimPlot(Seurat.integr.3000, group.by = "cl.conserv_final",label = F, cols = XX.color.Paired.cl.conserv_final, order = c('hATF3', 'hPropr', 'hAb.LTMR', 'hAd.LTMR', 'hPEP.0', 'hPEP.NTRK3', 'hPEP.CHRNA7', 'hPEP.KIT', 'hPEP.PIEZOh', 'hPEP.TRPV1/A1.2', 'hPEP.TRPV1/A1.1', 'hPEP.SST', 'hNP2', 'hNP1',  'hC.LTMR', 'hTRPM8'))
+
+#c('hATF3', 'hPropr', 'hAb.LTMR', 'hAd.LTMR', 'hPEP.0', 'hPEP.NTRK3', 'hPEP.CHRNA7', 'hPEP.KIT', 'hPEP.PIEZOh', 'hPEP.TRPV1/A1.2', 'hPEP.TRPV1/A1.1', 'hPEP.SST', 'hNP1', 'hNP2', 'hTRPM8', 'hC.LTMR')
+
+```
+
+#Figure 1C
+```{r,fig.height=3, fig.width=6}
+library(Seurat)
+library(ggplot2)
+
+# Assuming Seurat.integr.3000 is your Seurat object and XX.color.Paired.cl.conserv_final is your color vector
+
+# Create the violin plot with an overlaid box plot
+F1C <- VlnPlot(
+  Seurat.integr.3000,
+  features = "nFeature_RNA",
+  pt.size = 0, 
+  cols = XX.color.Paired.cl.conserv_final
+) + 
+  geom_boxplot(width=0.1, position=position_dodge(width=0.9), outlier.shape = NA) + 
+  theme(axis.text = element_text(size = 10))
+
+
+# Save the plot as a vector figure (SVG)
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/F1C.svg", plot = F1C, height = 4.8, width = 7)
+
+```
+
+#Figure 1D
+```{r,fig.height=3, fig.width=6}
+library(Seurat)
+library(ggplot2)
+
+DefaultAssay(Seurat.integr.3000) <- "RNA"
+
+# Assuming Seurat.integr.3000 is your Seurat object and XX.color.Paired.cl.conserv_final is your color vector
+
+# Create the violin plot with an overlaid box plot
+F1D <- VlnPlot(
+  Seurat.integr.3000,
+  features = "SLC17A6",
+  pt.size = 0, 
+  slot = "counts",
+  cols = XX.color.Paired.cl.conserv_final
+) + 
+  geom_boxplot(width=0.1, position=position_dodge(width=0.9), outlier.shape = NA) + 
+  theme(axis.text = element_text(size = 10))
+
+
+# Save the plot as a vector figure (SVG)
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/F1D.svg", plot = F1D, height = 4.8, width = 7)
+```
+
+#Figure 1E
+```{r,fig.height=3, fig.width=6}
+library(Seurat)
+library(ggplot2)
+
+DefaultAssay(Seurat.integr.3000) <- "RNA"
+
+# Assuming Seurat.integr.3000 is your Seurat object and XX.color.Paired.cl.conserv_final is your color vector
+
+# Create the violin plot with an overlaid box plot
+F1E_6 <- VlnPlot(
+  Seurat.integr.3000,
+  features = "NTRK1",
+  pt.size = 0, 
+  slot = "counts",
+  cols = XX.color.Paired.cl.conserv_final
+) + 
+  geom_boxplot(width=0.1, position=position_dodge(width=0.9), outlier.shape = NA) + 
+  theme(axis.text = element_text(size = 10))
+
+
+# Save the plot as a vector figure (SVG)
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/F1E_6.svg", plot = F1E_6, height = 4.5, width = 7.2)
+```
+
+#Figure 1F
+```{r,fig.height=3, fig.width=3.6}
+# Featrure plot example 
+# Create the FeaturePlot and assign it to a variable
+F1F_PVALB <- FeaturePlot(Seurat.integr.3000, features = c('PVALB'), pt.size = 0.4)
+
+# Save the plot as an SVG file
+ggsave(filename = 'C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/F1F_PVALB.svg', plot = F1F_PVALB, device = "svg", height = 3, width = 3.9)
+
+```
+
+
+#Supplementary figure 1D-E
+```{r,fig.height=3, fig.width=4}
+## Plot for QC
+## donor, batch, drg_level
+
+# Create the violin plot with an overlaid box plot
+SF2A<- VlnPlot(
+  Seurat.integr.3000,
+  features = c("nFeature_RNA"),
+  group.by = c('batch'), 
+  pt.size = 0,
+  cols = XX.color.Paired.cl.conserv_final
+) + 
+  geom_boxplot(width = 0.1, position = position_dodge(width = 0.9), outlier.shape = NA) + 
+  theme(axis.text = element_text(size = 10))
+
+# Save the plot as a vector figure (SVG)
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/SF2A.svg", plot = SF2C, height = 4.5, width = 6)
+```
+
+
+#Supplementary figure 1G-I
+
+```{r fig.height=3, fig.width=4}
+## donor, batch, drg_level
+SF2F <- DimPlot(Seurat.integr.3000, group.by = "drg_level",label = F, cols = XX.color.Paired.cl.conserv_final, pt.size = 0.5, order = c('hATF3', 'hPropr', 'hAb.LTMR', 'hAd.LTMR', 'hPEP.0', 'hPEP.NTRK3', 'hPEP.CHRNA7', 'hPEP.KIT', 'hPEP.PIEZOh', 'hPEP.TRPV1/A1.2', 'hPEP.TRPV1/A1.1', 'hPEP.SST', 'hNP2', 'hNP1',  'hC.LTMR', 'hTRPM8'))
+
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/SF2F.svg", plot = SF2F, device = "svg",width = 5.2, height = 3.5 )
+
+```
+
+
+#Supplementary figure 1J-K
+```{r,fig.height=3, fig.width=6}
+library(Seurat)
+library(ggplot2)
+
+DefaultAssay(Seurat.integr.3000) <- "RNA"
+
+# Assuming Seurat.integr.3000 is your Seurat object and XX.color.Paired.cl.conserv_final is your color vector
+
+# Create the violin plot with an overlaid box plot
+F1D <- VlnPlot(
+  Seurat.integr.3000,
+  features = "SYP",
+  pt.size = 0, 
+  slot = "counts",
+  cols = XX.color.Paired.cl.conserv_final
+) + 
+  geom_boxplot(width=0.1, position=position_dodge(width=0.9), outlier.shape = NA) + 
+  theme(axis.text = element_text(size = 10))
+
+
+# Save the plot as a vector figure (SVG)
+#ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/F1D.svg", plot = F1D, height = 4.8, width = 7)
+F1D 
+```
+
+#Supplementary figure 1N
+```{r,fig.height=3, fig.width=6}
+library(Seurat)
+library(ggplot2)
+
+DefaultAssay(Seurat.integr.3000) <- "RNA"
+
+# Assuming Seurat.integr.3000 is your Seurat object and XX.color.Paired.cl.conserv_final is your color vector
+
+# Create the violin plot with an overlaid box plot
+SF2K <- VlnPlot(
+  Seurat.integr.3000,
+  #features = "SLC17A6",
+  features = c("diameter"),
+  pt.size = 0, 
+  slot = "counts",
+  cols = XX.color.Paired.cl.conserv_final
+) + 
+  geom_boxplot(width=0.1, position=position_dodge(width=0.9), outlier.shape = NA) + 
+  theme(axis.text = element_text(size = 10))
+
+
+# Save the plot as a vector figure (SVG)
+#ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/SF2K.svg", plot = SF2K, height = 4.5, width = 6)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r,fig.height=3, fig.width=6}
+library(Seurat)
+library(ggplot2)
+library(dplyr)
+library(data.table)
+
+# Ensure the Seurat object is using the correct assay
+DefaultAssay(Seurat.integr.3000) <- "RNA"
+
+# Extract the metadata and convert it to a data.table
+metadata <- as.data.table(Seurat.integr.3000@meta.data, keep.rownames = TRUE)
+setnames(metadata, "rn", "cell_names")  # Rename the rownames column to cell_names
+
+# Filter out NA values in diameter
+metadata <- metadata[!is.na(diameter), ]
+
+# For each cell type, select top 50% of cells by diameter
+metadata[, top_50 := diameter > quantile(diameter, 0.5), by = cl.conserv_final]
+top_50_metadata <- metadata[top_50 == TRUE]
+
+# Extract the filtered cell names
+filtered_cells <- top_50_metadata$cell_names
+
+# Subset the Seurat object with the filtered cells
+Seurat.integr.3000.filtered <- subset(Seurat.integr.3000, cells = filtered_cells)
+
+# Create the violin plot with an overlaid box plot
+F1E_1 <- VlnPlot(
+  Seurat.integr.3000.filtered,
+  features = c("diameter"),
+  pt.size = 0, 
+  slot = "counts",
+  cols = XX.color.Paired.cl.conserv_final
+) + 
+  geom_boxplot(width = 0.1, position = position_dodge(width = 0.9), outlier.shape = NA) + 
+  theme(axis.text = element_text(size = 10))
+
+# Save the plot as a vector figure (SVG)
+#ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/F1E_1.svg", plot = F1E_1, height = 4.5, width = 6)
+
+F1E_1 
+```
+
+```{r fig.height=3, fig.width=4}
+SF2F <- DimPlot(Seurat.integr.3000, group.by = "drg_level",label = F, cols = XX.color.Paired.cl.conserv_final, pt.size = 0.5, order = c('hATF3', 'hPropr', 'hAb.LTMR', 'hAd.LTMR', 'hPEP.0', 'hPEP.NTRK3', 'hPEP.CHRNA7', 'hPEP.KIT', 'hPEP.PIEZOh', 'hPEP.TRPV1/A1.2', 'hPEP.TRPV1/A1.1', 'hPEP.SST', 'hNP2', 'hNP1',  'hC.LTMR', 'hTRPM8'))
+
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/SF2F.svg", plot = SF2F, device = "svg",width = 5.2, height = 3.5 )
+
+```
+
+```{r fig.height=3, fig.width=4}
+SF2E_3 <- DimPlot(Seurat.integr.3000, 
+                  group.by = "donor",
+                  label = F, 
+                  cols = XX.color.Paired.cl.conserv_final, 
+                  pt.size = 2, 
+                  order = c('hATF3', 'hPropr', 'hAb.LTMR', 'hAd.LTMR', 'hPEP.0', 'hPEP.NTRK3', 'hPEP.CHRNA7', 'hPEP.KIT', 'hPEP.PIEZOh', 'hPEP.TRPV1/A1.2', 'hPEP.TRPV1/A1.1', 'hPEP.SST', 'hNP2', 'hNP1',  'hC.LTMR', 'hTRPM8')) + 
+#                  xlim(2,4) + 
+#                  ylim(-4, -2)
+
+                  xlim(9,11) + 
+                  ylim(0, 2)
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/SF2E_3.svg", plot = SF2E_3, device = "svg",width = 10, height = 8)
+
+
+```
+
+```{r fig.height=3, fig.width=4}
+F1B <- DimPlot(Seurat.integr.3000, group.by = "cl.conserv_final",label = F, cols = XX.color.Paired.cl.conserv_final, order = c('hATF3', 'hPropr', 'hAb.LTMR', 'hAd.LTMR', 'hPEP.0', 'hPEP.NTRK3', 'hPEP.CHRNA7', 'hPEP.KIT', 'hPEP.PIEZOh', 'hPEP.TRPV1/A1.2', 'hPEP.TRPV1/A1.1', 'hPEP.SST', 'hNP2', 'hNP1',  'hC.LTMR', 'hTRPM8'))
+
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/F1B.svg", plot = F1B, device = "svg",width = 8.3, height = 4.8 )
+
+```
+
+
+```{r fig.height=3, fig.width=4}
+F1G <- DimPlot(Seurat.integr.3000, group.by = "cl.conserv_final",label = F, cols = XX.color.Paired.cl.conserv_final, order = c('hATF3', 'hPropr', 'hAb.LTMR', 'hAd.LTMR', 'hPEP.0', 'hPEP.NTRK3', 'hPEP.CHRNA7', 'hPEP.KIT', 'hPEP.PIEZOh', 'hPEP.TRPV1/A1.2', 'hPEP.TRPV1/A1.1', 'hPEP.SST', 'hNP2', 'hNP1',  'hC.LTMR', 'hTRPM8'))
+
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/F1G.svg", plot = F1G, device = "svg",width = 8.7, height = 6 )
+
+```
+
+
+```{r, fig.width=4, fig.height=3}
+library(Seurat)
+
+# Assuming 'Seurat.integr.3000' is your Seurat object and clustering has been performed
+
+# Access cluster identities
+cluster_ids <- Idents(Seurat.integr.3000)
+
+# Count the number of cells in each cluster
+cluster_counts <- table(cluster_ids)
+
+# Calculate the percentage of cells in each cluster
+total_cells <- sum(cluster_counts)
+cluster_percentages <- cluster_counts / total_cells * 100
+
+# Prepare the output with cluster names, counts, and percentages
+output <- paste(names(cluster_counts), ": ", cluster_counts, " (", sprintf("%.2f%%", cluster_percentages), ")", sep="")
+
+# Print the output
+cat(output, sep="\n")
+
+
+```
+
+
+##=========================================================================
+Violin plot
+
+```{r, fig.width=5.36, fig.height=3.2}
+# violin plot examples
+# size in the figure [fig.width=5.5, fig.height=3.2]
+DefaultAssay(Seurat.integr.3000) <- "RNA"
+
+VlnPlot(
+  Seurat.integr.3000,
+  c('TMPRSS11A'),
+  slot = "counts",
+  
+  pt.size = 0.00,
+  cols=XX.color.Paired.cl.conserv_final
+)+ 
+  #ylim(c(0, 20)) #+
+  theme(axis.text.x = element_text(size = 7))
+
+```
+
+
+```{r, fig.width=6, fig.height=3.2}
+# violin plot examples
+# size in the figure [fig.width=5.5, fig.height=3.2]
+
+VlnPlot(
+  Seurat.integr.3000,
+  c('SERPINA3K'),
+  slot = "counts",
+  
+  pt.size = 0.00,
+  cols=XX.color.Paired.cl.conserv_final
+) +#ylim(c(0, 20))#+
+  theme(axis.text.x = element_text(size = 8))
+
+```
+
+```{r, fig.width=20, fig.height=45.5}
+# violin plot for major marker and functional genes
+
+VlnPlot(
+  Seurat.integr.3000,
+  c('NTRK1','NTRK2','NTRK3','GFRA1','GFRA2','GFRA3','RET','NPPB','OSMR','PTGDR','SCN9A','SCN10A','SCN11A','PRDM12','CALCA','TAC1','PIEZO2','TRPV1','TRPA1','TRPM8','MRGPRX1','MRGPRX3','MRGPRX4','IL31RA','SST','CHRNA3','PTGIR','KIT','CHRNA7','PVALB','PENK','ADCYAP1','UCN','PTGER3','ASIC1','LPAR3','CYSLTR2','MRGPRD','F2R','MRGPRE','HRH1','NMB','ATF3','RUNX1','RUNX2','RUNX3','NEFH','S100B','KCNV1','S100A4'),
+  slot = "counts",
+  pt.size = 0.05,
+  cols=XX.color.Paired.cl.conserv_final
+) #+
+  #theme(axis.text.x = element_text(size = 10))
+
+```
+
+
+```{r, fig.width=20, fig.height=25}
+# violin plot examples
+# size in the figure [fig.width=5.5, fig.height=3.2]
+DefaultAssay(Seurat.integr.3000) <- "RNA"
+
+VlnPlot(
+  Seurat.integr.3000,
+  c("MRGPRX1","TMPRSS11A", "TMPRSS11BNL", "TMPRSS11C", "TMPRSS11D", "TMPRSS11E", "TMPRSS11F", "TMPRSS12", "TMPRSS13", "TMPRSS15", "TMPRSS2", "TMPRSS3", "TMPRSS4", "TMPRSS5", "TMPRSS6", "TMPRSS7", "TMPRSS9", "HPN", "CORIN", "PRSS30"),
+  slot = "counts",
+  
+  pt.size = 0.00,
+  cols=XX.color.Paired.cl.conserv_final
+)+ 
+  #ylim(c(0, 20)) #+
+  theme(axis.text.x = element_text(size = 7))
+
+```
+
+
+
+```{r, fig.width=20, fig.height=35}
+# # violin plot for all TRP channels
+
+VlnPlot(
+  Seurat.integr.3000,
+  c( ),
+  slot = "counts",
+  pt.size = 0,
+  cols=XX.color.Paired.cl.conserv_final
+) #+
+  #theme(axis.text.x = element_text(size = 10))
+
+```
+
+```{r, fig.width=12, fig.height=3}
+# violin plot itch receptor 
+
+## itch receptor ['HRH1','HRH4','MRGPRX1','MRGPRX4','HTR2A','HTR7','F2RL1','MRGPRD','CYSLTR2','IL4R','IL13RA1','IL31RA','OSMR','IL7R','CRLF2','IL1RAP','TLR3','TLR7','JAK1']
+
+## itch receptor ['PTGDR', 'PTGER1', 'PTGER2', 'PTGER3', 'PTGER4', 'PTGIR', 'TBXA2R', 'PTGRL', 'GPR44']
+
+# All human TRP channels ['TRPA1', 'TRPC1', 'TRPC3', 'TRPC4', 'TPRC5', 'TPRC6', 'TPRC7', 'TRPM1', 'TRPM2', 'TRPM3', 'TRPM4', 'TRPM5', 'TRPM6', 'TRPM7', 'TRPM8', 'MCOLN1', 'MCOLN2', 'MCOLN3', 'PKD2', 'PKD2L1', 'PKD2L2', 'TRPV1', 'TRPV2', 'TRPV3', 'TRPV4', 'TRPV5', 'TRPV6']
+
+# All human Potasium channels ['KCNA1', 'KCNA2', 'KCNA3', 'KCNA4', 'KCNA5', 'KCNA6', 'KCNA7', 'KCNA10', 'KCNB1', 'KCNB2', 'KCNC1', 'KCNC2', 'KCNC3', 'KCNC4', 'KCND1', 'KCND2', 'KCND3', 'KCNF1', 'KCNG1', 'KCNG4', 'KCNH1', 'KCNH2', 'KCNH3', 'KCNH5', 'KCNH6', 'KCNH7', 'KCNH8', 'KCNQ1', 'KCNQ2', 'KCNQ3', 'KCNQ4', 'KCNQ5', 'KCNS1', 'KCNS2', 'KCNS3', 'KCNV1', 'KCNV2', 'KCNV3',        'KCNMA1', 'KCNN1', 'KCNN2', 'KCNN3', 'KCNN4', 'KCNT1', 'KCNT2', 'KCNU1',    'KCNJ1', 'KCNJ2', 'KCNJ3', 'KCNJ4', 'KCNJ5', 'KCNJ6', 'KCNJ8', 'KCNJ9', 'KCNJ10', 'KCNJ11', 'KCNJ12', 'KCNJ13', 'KCNJ14', 'KCNJ15', 'KCNJ16',     'KCNK1', 'KCNK2', 'KCNK3', 'KCNK4', 'KCNK5', 'KCNK6', 'KCNK7', 'KCNJ9', 'KCNJ10', 'KCNJ12', 'KCNJ13', 'KCNJ15', 'KCNJ16', 'KCNJ17', 'KCNJ18']
+
+# All human calcium channels ['CACNA1A','CACNA1B','CACNA1C','CACNA1D','CACNA1E','CACNA1G','CACNA1H','CACNA1I','CACNA1S','CACNA1X']
+
+# All human sodium channels ['SCN1A', 'SCN2A', 'SCN3A', 'SCN4A', 'SCN5A', 'SCN8A', 'SCN9A', 'SCN10A', 'SCN11A']
+
+# All Gi coupled GCPR ['ADRA2A', 'ADRA2B', 'ADRA2C', 'ADRB1', 'ADRB2', 'ADRB3', 'AGTR2', 'CNR1', 'CNR2', 'CHRM2', 'CHRM3', 'CHRM4', 'CHRM5', 'CHRM1', 'CHRM5', 'GABBR1', 'GABBR2', 'GALR1', 'GALR2', 'GALR3', 'GPR55', 'GRM4', 'GRM5', 'HTR1A', 'HTR1B', 'HTR1D', 'HTR1E', 'HTR1F', 'HTR2A', 'HTR2B', 'HTR2C', 'HTR4', 'HTR5A', 'HTR5B', 'MTNR1A', 'MTNR1B', 'MTNR1C', 'NMUR1', 'NMUR2', 'OPRM1', 'OPRK1', 'OPRD1', 'S1PR1', 'S1PR3']
+
+VlnPlot(
+  Seurat.integr.3000,
+  c('TAC1', 'TAC2', 'TAC3','TAC4'),
+  slot = "counts",
+  pt.size = 0.0,
+  cols=XX.color.Paired.cl.conserv_final
+) #+
+  #theme(axis.text.x = element_text(size = 10))
+
+```
+
+##=========================================================================
+Feature plot
+
+
+```{r,fig.height=3, fig.width=3.6}
+# Featrure plot example 
+
+FeaturePlot(Seurat.integr.3000, features = c('TAC1'))
+```
+
+
+
+
+
+
+
+```{r,fig.height=8, fig.width=15}
+# Featrure plot for cluster genes 
+
+## Cluster genes ['NTRK2','NTRK3','PVALB','KCNV1','SCN10A','CALCA','TRPV1','GFRA2','GFRA3','OSMR','MRGPRX1','SST','TRPA1','PTGER3','KIT','CHRNA7','TRPM8']
+
+FeaturePlot(Seurat.integr.3000, features = c('MRGPRX1','SST','TRPA1','PTGER3','KIT','CHRNA7','NTRK2','NTRK3','PVALB','KCNV1','CASQ2','TRPM8'))
+```
+
+
+##=======================================
+## Find marker genes for all clusters for Heatmap plot
+
+```{r}
+## find marker genes
+Mrk.all.LR <- FindAllMarkers(Seurat.integr.3000, only.pos = TRUE, 
+                             test.use = "LR",
+                             logfc.threshold = 0.70)
+
+Mrk.all.LR %>%
+  group_by(cluster) %>%
+  top_n(n = 50, wt = avg_log2FC) -> top10.raw
+
+table(top10.raw$cluster)
+
+```
+
+```{r,fig.height=30, fig.width=50}
+## Heatmap plot, fig.height=30, fig.width=25
+DoHeatmap(Seurat.integr.3000, features=top10.raw$gene,  size = 8, label = T, group.colors=XX.color.Paired.cl.conserv_final) + theme(text = element_text(size = 20))
+```
+
+```{r}
+DoHeatmap(Seurat.integr.3000, features=top10.raw$gene[1:100], size = 3, label = T, group.colors=XX.color.Paired.cl.conserv)+
+  theme(text = element_text(size = 10))
+```
+
+
+
+##=======================================
+## Find marker genes for two or more clusters for heatmap plot
+
+```{r,fig.height=20, fig.width=25}
+Mrkr.cl.NP3.vs.PEP1.13 <- FindMarkers(Seurat.integr.3000,
+                                      slot = "data", 
+                                      ident.1 = "hNP1",
+                                      ident.2 = "hNP2",
+                                      logfc.threshold = 0.6,
+                                      test.use = "LR", 
+                                      min.pct = 0.15)
+
+Mrkr.cl.NP3.vs.PEP1.13 <-Mrkr.cl.NP3.vs.PEP1.13
+DoHeatmap(Seurat.integr.3000,group.colors=XX.color.Paired.cl.conserv_final, features = rownames(Mrkr.cl.NP3.vs.PEP1.13)[order(Mrkr.cl.NP3.vs.PEP1.13$avg_log2FC)], size = 4.5) + 
+  theme(text = element_text(size = 15)) 
+```
+## Find marker genes for merged clusters for heatmap plot
+
+```{r,fig.height=20, fig.width=25}
+# Load your Seurat object (replace 'your_seurat_object' with the actual variable name)
+Seurat_object_marker_genes <-Seurat.integr.3000
+
+# Identify cells belonging to hNP1 and hNP2
+hNP1_cells <- which(Seurat_object_marker_genes$cl.conserv_final == "hNP1")
+hNP2_cells <- which(Seurat_object_marker_genes$cl.conserv_final == "hNP2")
+
+# Merge hNP1 and hNP2 into hNP
+Seurat_object_marker_genes$cl.conserv_final[hNP1_cells] <- "hNP"
+Seurat_object_marker_genes$cl.conserv_final[hNP2_cells] <- "hNP"
+
+# Recalculate cluster-level statistics
+Seurat_object_marker_genes <- FindClusters(Seurat_object_marker_genes, resolution = 0.8)
+
+# Recalculate dimensional reduction (e.g., PCA)
+Seurat_object_marker_genes <- RunPCA(Seurat_object_marker_genes)
+Seurat_object_marker_genes <- FindNeighbors(Seurat_object_marker_genes)
+
+```
+
+
+##=======================================
+## Find marker genes for two or more clusters for heatmap plot
+
+```{r,fig.height=20, fig.width=25}
+Mrkr.cl.NP3.vs.PEP1.13 <- FindMarkers(Seurat.integr.3000,
+                                      slot = "data", 
+                                      ident.1 = "hPEP.TRPV1/A1.1",
+                                      ident.2 = "hPEP.TRPV1/A1.2",
+                                      ident.3 = "hPEP.PIEZOh",
+                                      ident.4 = "hPEP.KIT",
+                                      ident.5 = "hPEP.NTRK3",
+                                      ident.6 = "hPEP.0",
+                                      logfc.threshold = 0.6,
+                                      test.use = "LR", 
+                                      min.pct = 0.15)
+
+Mrkr.cl.NP3.vs.PEP1.13 <-Mrkr.cl.NP3.vs.PEP1.13
+DoHeatmap(Seurat.integr.3000,group.colors=XX.color.Paired.cl.conserv_final, features = rownames(Mrkr.cl.NP3.vs.PEP1.13)[order(Mrkr.cl.NP3.vs.PEP1.13$avg_log2FC)], size = 4.5) + 
+  theme(text = element_text(size = 15)) 
+```
+## Find marker genes for merged clusters for heatmap plot
+
+```{r,fig.height=20, fig.width=25}
+# Load your Seurat object (replace 'your_seurat_object' with the actual variable name)
+Seurat_object_marker_genes <-Seurat.integr.3000
+
+# Identify cells belonging to hNP1 and hNP2
+hPEP.TRPV1_A1.1_cells <- which(Seurat_object_marker_genes$cl.conserv_final == "hPEP.TRPV1/A1.1")
+hPEP.TRPV1_A1.2_cells <- which(Seurat_object_marker_genes$cl.conserv_final == "hPEP.TRPV1/A1.2")
+hPEP.PIEZOh_cells <- which(Seurat_object_marker_genes$cl.conserv_final == "hPEP.PIEZOh")
+hPEP.CHRNA7 <- which(Seurat_object_marker_genes$cl.conserv_final == "CHRNA7")
+hPEP.KIT_cells <- which(Seurat_object_marker_genes$cl.conserv_final == "hPEP.KIT")
+hPEP.NTRK3_cells <- which(Seurat_object_marker_genes$cl.conserv_final == "hPEP.NTRK3")
+hPEP.0_cells <- which(Seurat_object_marker_genes$cl.conserv_final == "hPEP.0")
+
+
+# Merge hNP1 and hNP2 into hNP
+Seurat_object_marker_genes$cl.conserv_final[hPEP.TRPV1_A1.1_cells] <- "hPEP"
+Seurat_object_marker_genes$cl.conserv_final[hPEP.TRPV1_A1.2_cells] <- "hPEP"
+Seurat_object_marker_genes$cl.conserv_final[hPEP.PIEZOh_cells] <- "hPEP"
+Seurat_object_marker_genes$cl.conserv_final[hPEP.CHRNA7] <- "hPEP"
+Seurat_object_marker_genes$cl.conserv_final[hPEP.KIT_cells] <- "hPEP"
+Seurat_object_marker_genes$cl.conserv_final[hPEP.NTRK3_cells] <- "hPEP"
+Seurat_object_marker_genes$cl.conserv_final[hPEP.0_cells] <- "hPEP"
+
+# Recalculate cluster-level statistics
+Seurat_object_marker_genes <- FindClusters(Seurat_object_marker_genes, resolution = 0.8)
+
+# Recalculate dimensional reduction (e.g., PCA)
+Seurat_object_marker_genes <- RunPCA(Seurat_object_marker_genes)
+Seurat_object_marker_genes <- FindNeighbors(Seurat_object_marker_genes)
+
+```
+
+
+
+
+```{r,fig.height=20, fig.width=25}
+# Load your Seurat object (replace 'your_seurat_object' with the actual variable name)
+
+# Identify markers for cluster hNP (merged cluster)
+Idents(Seurat_object_marker_genes) <- "cl.conserv_final"
+
+
+hPEP_markers <- FindMarkers(Seurat_object_marker_genes, ident.1 = "hPEP", only.pos = TRUE)
+
+hPEP_markers[1:50,] 
+
+```
+
+
+
+
+
+##==================================
+## Dotplot 
+
+```{r,fig.height=5, fig.width=8}
+## Dotplot example
+
+DotPlot(Seurat.integr.3000, features = c('TAC1','SCRG1','ATP2B4','TRPA1','TMBIM1','SCG2','AQP1','VAT1','OPRM1','CD9','NTRK1')) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+```
+
+```{r,fig.height=5, fig.width=8}
+## Dotplot for marker genes PEP1.13 & PEP.H4.15
+
+## NP1 & NP2 ['CDH1','GFRA2','SCN11A','MRGPRX1','AHNAK','OSMR','PLCB3','FSTL1','RGS4','IL31RA','RASSF6','GFRA1','CEMIP','IGSF3']
+
+## NP3 ['SST','HTR3A','GFRA3','CHRNA3','CALCB','NOS1','DGKH','PCSK1','CALCA']
+
+## PEP1.13 & PEP.H4.15 ['TAC1','SCRG1','ATP2B4','TRPA1','TMBIM1','SCG2','AQP1','VAT1','OPRM1','CD9','NTRK1']
+
+## PEP.H4 ['EHD3','CAMK1D','VAT1','PTGER3','CAPN5','NMB','NGFR','SERPINE2']
+
+## PEP3 ['KIT','TMEM273','TSPAN33','DOC2A','SLC7A14','OPCML','BCAM','EXOC1L']
+
+## PEPH5 ['CHRNA7','CST3','CPNE4','TMEM233','NOS1','TAC1','AQP1','CD9']
+
+## PEPH8 & PEPH0 ['NTRK3','S100A4','ELMO1','SUSD2','S100A16','NPTX1','CPNE6','PCP4','TECR']
+
+## Ad.LTMR ['KCNV1','PCDH7','PLXNA2','KCNAB1','GPX2','NTRK2','RAB31','HTRA1','TP53I11','SFRP1']
+
+## Ab.LTMR ['NEFL','NEFH','SPP1','NEFM','S100B','SPARCL1','GPX3','HINT1','NDUFA4']
+
+## Propr ['REEP5','WLS','ATP11A','KANK4','GPRC5B','PVALB','SMAD9','VSNL1']
+
+## C.LTMR ['CASQ2','SERPINA1','P2RY1','SLIT1','CDHR1','AHNAK','GFRA2','ADGRG2']
+
+## TRPM8 ['STUM','TRPM8','ENTPD3','PCDH9','CA8','ASIC1','KCNH6','PWRN1','SORL1','MALAT1']
+
+
+
+```
+
+```{r,fig.height=5, fig.width=18}
+# all clusters
+
+#'STUM','TRPM8','ENTPD3','PCDH9','CA8','ASIC1','KCNH6','PWRN1','SORL1','MALAT1','CASQ2','SERPINA1','P2RY1','SLIT1','CDHR1','ADGRG2',  'CDH1','GFRA2','SCN11A','MRGPRX1','AHNAK','OSMR','PLCB3','FSTL1','RGS4','IL31RA','RASSF6','GFRA1','CEMIP','IGSF3','SST','HTR3A','GFRA3','CHRNA3','CALCB','DGKH','PCSK1','CALCA','TAC1','SCRG1','ATP2B4','TRPA1','TMBIM1','SCG2','AQP1','OPRM1','NTRK1','EHD3','CAMK1D','VAT1','PTGER3','CAPN5','NMB','NGFR','SERPINE2','KIT','TMEM273','TSPAN33','DOC2A','SLC7A14','OPCML','BCAM','EXOC1L','CHRNA7','CST3','CPNE4','TMEM233','NOS1','CD9', 'NTRK3','S100A4','ELMO1','SUSD2','S100A16','NPTX1','CPNE6','PCP4','TECR', 'KCNV1','PCDH7','PLXNA2','KCNAB1','GPX2','NTRK2','RAB31','HTRA1','TP53I11','SFRP1','NEFL','NEFH','SPP1','NEFM','S100B','SPARCL1','GPX3','HINT1','NDUFA4', 'REEP5','WLS','ATP11A','KANK4','GPRC5B','PVALB','SMAD9','VSNL1'
+
+DotPlot(Seurat.integr.3000, features = c('STUM','TRPM8','ENTPD3','PCDH9','CA8','PWRN1','SORL1','CASQ2','SERPINA1','P2RY1','SLIT1','CDHR1','ADGRG2',  'CDH1','SCN11A','MRGPRX1','OSMR','PLCB3','FSTL1','RGS4','RASSF6','MRGPRX3','MRGPRX4','SST','CCK','GFRA3','HTR3A','CHRNA3','CALCB','CALCA','SCRG1','TRPA1','TMBIM1','TAC1','ATP2B4','AQP1','OPRM1','VAT1','PTGER3','EHD3','CAMK1D','NMB','SERPINE2','KIT','TMEM273','TSPAN33','DOC2A','CHRNA7','CST3','CPN2E4','CD9','S100A4','S100A16', 'NTRK3','SUSD2','PCP4', 'KCNV1','PCDH7','PLXNA2','KCNAB1','NTRK2','RAB31','SFRP1','NEFL','NEFH','S100B','GPX3', 'REEP5','WLS','ATP11A','KANK4','GPRC5B','PVALB','ATF3','UCN','SEMA6A'), col.min = 0) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+
+```
+
+
+
+```{r,fig.height=5, fig.width=12}
+# Dotplot for marker genes in NP1 & NP2
+
+DotPlot(Seurat.integr.3000, features = c('CDH1','GFRA2','SCN11A','MRGPRX1','AHNAK','OSMR','PLCB3','FSTL1','RGS4','IL31RA','RASSF6','GFRA1','CEMIP','IGSF3')) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+```
+
+
+```{r,fig.height=5, fig.width=12}
+# Dotplot for marker genes in NP3, PEP1.13 & PEPH4.15
+
+DotPlot(Seurat.integr.3000, features = c('SST','HTR3A','GFRA3','CHRNA3','CALCB','TAC1','SCRG1','ATP2B4','TRPA1','TMBIM1','AQP1','VAT1','OPRM1','CD9','NTRK1')) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+```
+
+
+```{r,fig.height=5, fig.width=12}
+# Dotplot for marker genes in PEP.H4, PEP3, PEPH5, PEPH8 & PEPH0
+
+DotPlot(Seurat.integr.3000, features = c('EHD3','CAMK1D','PTGER3','KIT','TMEM273','TSPAN33','CHRNA7','CST3','CPNE4','NTRK3','S100A4','S100A16')) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+
+
+```
+
+
+```{r,fig.height=5, fig.width=12}
+# Dotplot for marker genes in Ad.LTMR, Ab.LTMR and Propr
+
+DotPlot(Seurat.integr.3000, features = c('KCNV1','PCDH7','PLXNA2','KCNAB1', 'NEFL','NEFH','S100B', 'REEP5','WLS','ATP11A','KANK4')) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+
+```
+
+
+```{r,fig.height=5, fig.width=12}
+# # Dotplot for marker genes in CLTMR & TRPM8
+
+DotPlot(Seurat.integr.3000, features = c('CASQ2','SERPINA1','P2RY1','SLIT1','CDHR1','AHNAK','GFRA2','ADGRG2','STUM','TRPM8','ENTPD3','PCDH9','CA8','PWRN1','SORL1','MALAT1')) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+
+```
+
+
+```{r,fig.height=5, fig.width=8}
+# Un.Gi
+
+DotPlot(Seurat.integr.3000, features = c('TRIM54','ADCYAP1','SEMA6A','ATF3','UCN')) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+
+```
+
+
+
+
+
+```{r,fig.height=6, fig.width=12}
+## Dotplot itch receptors
+
+## itch receptor ['HRH1','HRH4','MRGPRX1','MRGPRX4','HTR2A','HTR7','F2RL1','MRGPRD','CYSLTR2','IL4R','IL13RA1','IL31RA','OSMR','IL7R','CRLF2','IL1RAP','TLR3','TLR7','JAK1']
+
+DotPlot(Seurat.integr.3000, features = c('HRH1','MRGPRX1','MRGPRX4','F2RL1','MRGPRD','CYSLTR2','IL4R','IL13RA1','IL31RA','OSMR','TLR3','TLR7')) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+```
+
+##============================
+#Sequence QC plot and other plot
+
+```{r,fig.height=3, fig.width=6}
+# nFeature_RNA
+VlnPlot(
+  Seurat.integr.3000,
+  features = "nFeature_RNA",
+  pt.size = 0, 
+  cols=XX.color.Paired.cl.conserv_final
+)+ theme(axis.text = element_text(size = 10))
+```
+
+
+
+
+
+
+
+```{r,fig.height=3, fig.width=6}
+library(Seurat)
+library(ggplot2)
+
+DefaultAssay(Seurat.integr.3000) <- "RNA"
+
+# Assuming Seurat.integr.3000 is your Seurat object and XX.color.Paired.cl.conserv_final is your color vector
+
+# Create the violin plot with an overlaid box plot
+SF2K <- VlnPlot(
+  Seurat.integr.3000,
+  #features = "SLC17A6",
+  features = c("diameter"),
+  pt.size = 0, 
+  slot = "counts",
+  cols = XX.color.Paired.cl.conserv_final
+) + 
+  geom_boxplot(width=0.1, position=position_dodge(width=0.9), outlier.shape = NA) + 
+  theme(axis.text = element_text(size = 10))
+
+
+# Save the plot as a vector figure (SVG)
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/SF2K.svg", plot = SF2K, height = 4.5, width = 6)
+
+```
+
+
+
+
+
+```{r,fig.height=3, fig.width=6}
+library(Seurat)
+library(ggplot2)
+
+DefaultAssay(Seurat.integr.3000) <- "RNA"
+
+# Assuming Seurat.integr.3000 is your Seurat object and XX.color.Paired.cl.conserv_final is your color vector
+
+# Create the violin plot with an overlaid box plot
+F6D_3 <- VlnPlot(
+  Seurat.integr.3000,
+  features = "TRPM8",
+  pt.size = 0, 
+  slot = "counts",
+  cols = XX.color.Paired.cl.conserv_final
+) + 
+  geom_boxplot(width=0.1, position=position_dodge(width=0.9), outlier.shape = NA) + 
+  theme(axis.text = element_text(size = 10))
+
+
+# Save the plot as a vector figure (SVG)
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/F6D_3.svg", plot = F6D_3, height = 4, width = 7.2)
+
+```
+
+
+```{r,fig.height=3, fig.width=6}
+### SF8
+
+library(Seurat)
+library(ggplot2)
+
+DefaultAssay(Seurat.integr.3000) <- "RNA"
+
+# Assuming Seurat.integr.3000 is your Seurat object and XX.color.Paired.cl.conserv_final is your color vector
+
+# Create the violin plot with an overlaid box plot
+F6D_3 <- VlnPlot(
+  Seurat.integr.3000,
+  features = "ADCYAP1",
+  pt.size = 0, 
+  slot = "counts",
+  cols = XX.color.Paired.cl.conserv_final
+) + 
+  geom_boxplot(width=0.1, position=position_dodge(width=0.9), outlier.shape = NA) + 
+  theme(axis.text = element_text(size = 10))
+
+
+# Save the plot as a vector figure (SVG)
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/SF6_26.svg", plot = F6D_3, height = 3, width = 5.1)
+
+```
+
+```{r,fig.height=3, fig.width=8}
+# glia cell marker
+VlnPlot(
+  Seurat.integr.3000,
+  features = c("APOE", "FABP7"),
+  pt.size = 0, 
+  slot = "counts",
+  cols=XX.color.Paired.cl.conserv_final
+)+ theme(axis.text = element_text(size = 10))
+```
+
+
+```{r,fig.height=3.5, fig.width=5}
+# Cell diameter distribution
+VlnPlot(
+  Seurat.integr.3000,
+  features = c("diameter"),
+  pt.size = 0, 
+  cols=XX.color.Paired.cl.conserv_final
+)+ theme(axis.text = element_text(size = 10))
+```
+
+```{r,fig.height=3, fig.width=4}
+## Plot for QC
+## donor, level, batch
+
+VlnPlot(
+  Seurat.integr.3000,
+  features = c("nFeature_RNA"),
+  group.by = c('batch'),
+  pt.size = 0, 
+  cols=XX.color.Paired.cl.conserv_final
+)+ theme(axis.text = element_text(size = 10))
+```
+
+```{r,fig.height=3, fig.width=4}
+## Plot for QC
+## donor, level, batch
+
+# Create the violin plot with an overlaid box plot
+SF2C<- VlnPlot(
+  Seurat.integr.3000,
+  features = c("nFeature_RNA"),
+  group.by = c('drg_level'), 
+  slot = "counts",
+  pt.size = 0,
+  cols = XX.color.Paired.cl.conserv_final
+) + 
+  geom_boxplot(width = 0.1, position = position_dodge(width = 0.9), outlier.shape = NA) + 
+  theme(axis.text = element_text(size = 10))
+
+# Save the plot as a vector figure (SVG)
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/SF2C.svg", plot = SF2C, height = 4.5, width = 6)
+```
+
+
+
+```{r}
+for (res in c(0.1, 0.25, 0.5, 1, 1.5, 2, 3, 3.4)) {
+    Seurat.integr.3000 <- FindClusters(Seurat.integr.3000, resolution =res, verbose = T)
+}
+```
+
+```{r,fig.height=8, fig.width=15}
+plot_grid(ncol = 4, DimPlot(Seurat.integr.3000, reduction = "umap", group.by = "integrated_snn_res.0.1") +
+    ggtitle("res.0.1"),DimPlot(Seurat.integr.3000, reduction = "umap", group.by = "integrated_snn_res.0.25") +
+    ggtitle("res.0.25"),DimPlot(Seurat.integr.3000, reduction = "umap", group.by = "integrated_snn_res.0.5") +
+    ggtitle("res.0.5"),DimPlot(Seurat.integr.3000, reduction = "umap", group.by = "integrated_snn_res.1") +
+    ggtitle("res.1"),DimPlot(Seurat.integr.3000, reduction = "umap", group.by = "integrated_snn_res.1.5") +
+    ggtitle("res.1.5"),DimPlot(Seurat.integr.3000, reduction = "umap", group.by = "integrated_snn_res.2") +
+    ggtitle("res.2"),DimPlot(Seurat.integr.3000, reduction = "umap", group.by = "integrated_snn_res.3") +
+    ggtitle("res.3"),DimPlot(Seurat.integr.3000, reduction = "umap", group.by = "integrated_snn_res.3.4") +
+    ggtitle("res.3.4"))
+
+```
+
+```{r}
+clustree(Seurat.integr.3000@meta.data, prefix='integrated_snn_res.')
+```
+
+
+
+```{r}
+# Save metadata
+
+save(Seurat.integr.3000,HS.counts.raw,Meta.1066.wo.glia,Meta.fused, file = "E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Hs_LCM_final.RData")
+```
+
+
+
+```{r}
+# Save metadata
+human_meta_final_cluster <- Seurat.integr.3000[[]]
+
+```
+
+```{r}
+# Save metadata
+# Extract metadata
+metadata <- Seurat.integr.3000@meta.data
+
+# Save to a CSV file
+write.csv(Meta.fused, file="C:/Users/huash/Desktop/metadata.csv")
+
+```
+
+```{r}
+# Save metadata
+expression =GetAssayData(Seurat.integr.3000)
+write.csv(expression, file = "C:/Users/huash/Desktop/expression.csv")
+```
+
+
+
+```{r,fig.height=6, fig.width=12}
+## Dimplot HSV-2 cells
+
+# Assuming you have a Seurat object named 'seurat_obj'
+
+# All mapped cells ['N2-RL5-94', 'N3-RL2-39', 'N3-RT11-73', 'N2-RT12-2', 'N2-RL5-15','N4-RT12-65','N4-RL3-66', 'N3-RT11-111' ,'N4-RL3-32', 'N4-RL3-10', 'N4-RL3-128', 'N3-RT11-97','N2-RL5-100', 'N4-RT12-53','N4-RT12-65','N4-RL3-66','N3-RT11-111','N4-RL3-32','N4-RL3-10','N4-RL3-128','N3-RT11-97','N2-RL5-100','N4-RT12-53','N2-RT12-154','N3-RT11-146','N3-RL2-177','N4-RL3-140','N2-RL5-191','N4-RT12-170']
+
+cells_to_highlight <- c('N2-RL5-94', 'N3-RL2-39', 'N3-RT11-73', 'N2-RT12-2', 'N2-RL5-15','N4-RT12-65','N4-RL3-66', 'N3-RT11-111' ,'N4-RL3-32', 'N4-RL3-10', 'N4-RL3-128', 'N3-RT11-97','N2-RL5-100', 'N4-RT12-53','N4-RT12-65','N4-RL3-66','N3-RT11-111','N4-RL3-32','N4-RL3-10','N4-RL3-128','N3-RT11-97','N2-RL5-100','N4-RT12-53','N2-RT12-154','N3-RT11-146','N3-RL2-177','N4-RL3-140','N2-RL5-191','N4-RT12-170')
+
+# Create a vector indicating the color for each cell
+color_vector <- ifelse(Seurat.integr.3000$cl.conserv_final %in% c('hNP1', 'hNP2'), "red", "grey")
+
+# Set the color vector as the cell color identity in Seurat object
+Seurat.integr.3000$cell_color <- color_vector
+
+# Plot UMAP with highlighted cells in red and other cells in grey
+DimPlot(Seurat.integr.3000, group.by = "cell_color", label = TRUE)
+
+
+```
+
+
+
+
+```{r,fig.height=6}
+
+
+# Assuming you have a Seurat object named 'seurat_obj'
+
+# All mapped cells ['N2-RL5-94', 'N3-RL2-39', 'N3-RT11-73', 'N2-RT12-2', 'N2-RL5-15','N4-RT12-65','N4-RL3-66', 'N3-RT11-111' ,'N4-RL3-32', 'N4-RL3-10', 'N4-RL3-128', 'N3-RT11-97','N2-RL5-100', 'N4-RT12-53','N4-RT12-65','N4-RL3-66','N3-RT11-111','N4-RL3-32','N4-RL3-10','N4-RL3-128','N3-RT11-97','N2-RL5-100','N4-RT12-53','N2-RT12-154','N3-RT11-146','N3-RL2-177','N4-RL3-140','N2-RL5-191','N4-RT12-170']
+
+# Define the row name that corresponds to the highlighted cells
+cells_to_highlight <- c('N2-RL5-94', 'N3-RL2-39', 'N3-RT11-73', 'N2-RT12-2', 'N2-RL5-15','N4-RT12-65','N4-RL3-66', 'N3-RT11-111' ,'N4-RL3-32', 'N4-RL3-10', 'N4-RL3-128', 'N3-RT11-97','N2-RL5-100', 'N4-RT12-53','N4-RT12-65','N4-RL3-66','N3-RT11-111','N4-RL3-32','N4-RL3-10','N4-RL3-128','N3-RT11-97','N2-RL5-100','N4-RT12-53','N2-RT12-154','N3-RT11-146','N3-RL2-177','N4-RL3-140','N2-RL5-191','N4-RT12-170')
+
+cells_to_highlight <- c('N2-RL5-94', 'N3-RL2-39', 'N3-RT11-73', 'N2-RT12-2', 'N2-RL5-15','N4-RT12-65','N4-RL3-66', 'N3-RT11-111' ,'N4-RL3-32', 'N4-RL3-10', 'N4-RL3-128', 'N3-RT11-97','N2-RL5-100', 'N4-RT12-53','N4-RT12-65','N4-RL3-66','N3-RT11-111','N4-RL3-32','N4-RL3-10','N4-RL3-128','N3-RT11-97','N2-RL5-100','N4-RT12-53','N2-RT12-154','N3-RT11-146','N3-RL2-177','N4-RL3-140','N2-RL5-191','N4-RT12-170')
+
+# Create a vector with the values for the new metadata column
+new_metadata <- c('NA')
+
+# Add the new metadata column to the Seurat object
+Seurat.integr.3000 <- AddMetaData(Seurat.integr.3000, metadata = new_metadata, col.name = "HSV2")
+
+Seurat.integr.3000$HSV2[cells_to_highlight] <- "HSV2"
+
+# Plot UMAP with highlighted cells in red and other cells in grey
+DimPlot(Seurat.integr.3000, group.by = "HSV2", cols = c('gray', 'red'), label = FALSE, order = c('HSV2','NA'))
+
+```
+
+
+```{r,fig.height=6}
+
+# Assuming you have a Seurat object named 'seuratObj'
+
+# Define the two clusters to compare
+cluster1 <- "hTRPM8"
+cluster2 <- "hPEP.KIT"
+
+# Define the set of genes you want to analyze
+gene_set <- c('HRH1','HRH4','MRGPRX1','MRGPRX4','HTR2A','HTR7','F2RL1','MRGPRD','CYSLTR2','IL4R','IL13RA1','IL31RA','OSMR','IL7R','CRLF2','IL1RAP','TLR3','TLR7','JAK1')
+
+# Perform differential expression analysis
+markers <- FindMarkers(Seurat.integr.3000, ident.1 = cluster1, ident.2 = cluster2, genes.use = gene_set)
+
+# Print the results
+print(markers)
+
+
+```
+
+
+```{r}
+# Visualize some qc metrics
+VlnPlot(
+  Seurat.integr.3000,
+  features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
+  pt.size = 0.0
+) 
+```
+
+```{r}
+# total gene detected in each donor
+donor1_cells <- subset(Seurat.integr.3000, subset = donor %in% c("N2"))
+expressed_genes <- rowSums(donor1_cells@assays$RNA@counts) > 0
+num_expressed_genes <- sum(expressed_genes)
+num_expressed_genes
+```
+
+```{r}
+# median gene detected in each donor
+donor1_cells <- subset(Seurat.integr.3000, subset = donor %in% c("N2","N3","N4"))
+nFeatures_per_cell <- apply(donor1_cells@assays$RNA@counts, 2, function(cell) {sum(cell > 0)})
+median_genes_detected <- median(nFeatures_per_cell)
+median_genes_detected 
+```
+
+
+
+```{r}
+# Identified genes that broadly expressed in all clusters
+
+avg_expr <- AverageExpression(seurat_obj, verbose = FALSE)
+
+threshold <- 0.5
+fraction_clusters <- 0.9
+num_clusters <- length(levels(seurat_obj$seurat_clusters))
+min_clusters <- round(num_clusters * fraction_clusters)
+
+broadly_expressed_genes <- rownames(avg_expr$RNA)[rowSums(avg_expr$RNA > threshold) >= min_clusters]
+
+print(broadly_expressed_genes)
+ 
+```
+
+```{r}
+# Identified genes that broadly expressed in all clusters
+
+#'hATF3', 'hPropr', 'hAb.LTMR', 'hAd.LTMR', 'hPEP.0', 'hPEP.NTRK3', 'hPEP.CHRNA7', 'hPEP.KIT', 'hPEP.PIEZOh', 'hPEP.TRPV1/A1.2', 'hPEP.TRPV1/A1.1', 'hPEP.SST', 'hNP2', 'hNP1',  'hC.LTMR', 'hTRPM8'
+
+markers_clusterall <- FindMarkers(Seurat.integr.3000, ident.1 = c( 'hPropr', 'hAb.LTMR', 'hAd.LTMR', 'hPEP.0', 'hPEP.NTRK3', 'hPEP.CHRNA7', 'hPEP.KIT', 'hPEP.PIEZOh', 'hPEP.TRPV1/A1.2', 'hPEP.TRPV1/A1.1', 'hPEP.SST', 'hNP2', 'hNP1','hC.LTMR', 'hTRPM8'))
+
+ 
+```
+
+```{r}
+normalized_data <- GetAssayData(object = Seurat.integr.3000, slot = "data")
+write.csv(as.data.frame(normalized_data), file = "E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Project data/Sequencing data/Expression_matrix_nomalized.csv")
+```
+
+

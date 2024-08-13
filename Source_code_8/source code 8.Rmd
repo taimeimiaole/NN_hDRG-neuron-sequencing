@@ -1,0 +1,298 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+# Load libraries
+library(Seurat)
+library(tidyverse)
+```
+
+```{r}
+# Load humanized DRG data from Zeisel et al. and create Seurat object
+load("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Single cell RNA seq_mouse_monkey_human/mouse_Sharma.RData")
+Idents(Sharma) <- Sharma$Cell.ident
+Idents(Sharma) <- factor(x = Idents(Sharma), levels=c('Abeta-Field','Abeta-RA-LTMR','Adelta-LTMR','C-LTMR','CGRP-Alpha','CGRP-Beta','CGRP-Epsilion','CGRP-Eta','CGRP-Gamma','CGRP-Theta','CGRP-Zeta','Nonpeptidergic nociceptors','Proprioceptors','Sst','TrpM8','Unknown'))
+
+# levels=c('Abeta-Field','Abeta-RA-LTMR','Adelta-LTMR','C-LTMR','CGRP-Alpha','CGRP-Beta','CGRP-Epsilion','CGRP-Eta','CGRP-Gamma','CGRP-Theta','CGRP-Zeta','Nonpeptidergic nociceptors','Proprioceptors','Sst','TrpM8','Unknown')
+
+#levels =c('TrpM8','C-LTMR','Nonpeptidergic nociceptors','CGRP-Theta','Sst','CGRP-Alpha','CGRP-Beta','CGRP-Gamma','CGRP-Epsilion','CGRP-Zeta','CGRP-Eta','Adelta-LTMR','Abeta-Field','Abeta-RA-LTMR','Proprioceptors','Unknown')
+
+```
+
+
+##==================================
+## Dotplot 
+
+##Supplementary Figure 6B
+```{r,fig.height=4, fig.width=10}
+library(Seurat)
+library(ggplot2)
+
+# Define the features
+features <- c('ATF3', 'CALCA', 'GFRA2', 'PIEZO2', 
+              'SLC17A8', 'TH', 'ZNF521')
+
+# Create the dotplot
+dotplot <- DotPlot(Sharma, features = features) + 
+  RotatedAxis() + 
+  theme(axis.text = element_text(size = 10))
+
+# Display the dotplot
+print(dotplot)
+
+# Save the dotplot as an SVG file
+svg_file <- "C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/SF8B_new.svg"
+#ggsave(svg_file, plot = dotplot, device = "svg", height = 4.5, width = 6)
+
+```
+
+##Supplementary Figure 6D
+```{r,fig.height=3, fig.width=6}
+library(Seurat)
+library(ggplot2)
+
+#DefaultAssay(Seurat.integr.3000) <- "RNA"
+
+# Assuming Seurat.integr.3000 is your Seurat object and XX.color.Paired.cl.conserv_final is your color vector
+
+# Create the violin plot with an overlaid box plot
+F1D <- VlnPlot(
+  Sharma,
+  features = "OPRK1",
+  pt.size = 0, 
+  slot = "counts",
+  cols = XX.color.Paired.cl.conserv_final
+) + 
+  geom_boxplot(width=0.1, position=position_dodge(width=0.9), outlier.shape = NA) + 
+  theme(axis.text = element_text(size = 10))
+
+
+# Save the plot as a vector figure (SVG)
+#ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/F1D.svg", plot = F1D, height = 4.8, width = 7)
+F1D 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+# Load humanized DRG data from Zeisel et al. and create Seurat object
+
+Sharma <-
+  Sharma %>%
+  CreateSeuratObject()
+```
+
+```{r}
+
+# Define the desired order of identities
+desired_order <- c("CGRP-Beta", "CGRP-Eta", "Abeta-RA-LTMR", "Abeta-Field", "TrpM8",
+                   "Adelta-LTMR", "Unknown", "Proprioceptors", "CGRP-Epsilon",
+                   "CGRP-Zeta", "Sst", "C-LTMR", "Nonpeptidergic nociceptors",
+                   "CGRP-Alpha", "CGRP-Gamma", "CGRP-Theta")
+
+# Set the identities in the desired order
+Sharma <- SetIdent(Sharma, value = factor(Idents(Sharma), levels = desired_order))
+```
+
+```{r}
+# Cluster zeisel data
+Sharma <-
+  Sharma %>%
+  NormalizeData() %>%
+  FindVariableFeatures() %>%
+  ScaleData() %>%
+  RunPCA(npcs = 100) %>%
+  RunUMAP(reduction = "pca", dims = 1:10) %>%
+  FindNeighbors(reduction = "pca", dims = 1:10) %>%
+  FindClusters(resolution = 0.5)
+
+```
+
+
+```{r, fig.height=5, fig.width=12}
+# Plot UMAPS and check that usoskin_ids fit
+DimPlot(Sharma, label = TRUE, group.by = "Cell.ident", repel = TRUE)+
+DimPlot(Sharma, label = TRUE, group.by = "seurat_clusters", repel = TRUE)
+
+```
+
+```{r, fig.height=5, fig.width=20}
+# Plot violins 
+# All human TRP channels ['TRPA1', 'TRPC1', 'TRPC3', 'TRPC4', 'TPRC5', 'TPRC6', 'TPRC7', 'TRPM1', 'TRPM2', 'TRPM3', 'TRPM4', 'TRPM5', 'TRPM6', 'TRPM7', 'TRPM8', 'MCOLN1', 'MCOLN2', 'MCOLN3', 'PKD2', 'PKD2L1', 'PKD2L2', 'TRPV1', 'TRPV2', 'TRPV3', 'TRPV4', 'TRPV5', 'TRPV6']
+#'NTRK1','NTRK2','NTRK3','GFRA1','GFRA2','GFRA3','RET','NPPB','OSMR','PTGDR','SCN9A','SCN10A','SCN11A','PRDM12','CALCA','TAC1','PIEZO2','TRPV1','TRPA1','TRPM8','MRGPRX3','IL31RA','SST','CHRNA3','PTGIR','KIT','CHRNA7','PVALB','PENK','ADCYAP1','UCN','PTGER3','ASIC1','LPAR3','MRGPRD','F2R','MRGPRE','HRH1','NMB','ATF3','RUNX1','RUNX2','RUNX3','NEFH','S100B','KCNV1','S100A4'
+VlnPlot(
+  Sharma,
+  c('SERPINA1','SERPINA2','SERPINA3','SERPINA4','SERPINA5','SERPINA6','SERPINA7','SERPINA8','SERPINA9','SERPINA10'),
+  slot = "counts",
+  group.by = "Cell.ident",
+  pt.size = 0.05,
+) #+
+```
+
+
+
+```{r,fig.height=4, fig.width=10}
+library(Seurat)
+library(ggplot2)
+
+# Define the features
+features <- c('ATF3', 'CALCA', 'FOXP2', 'GADD45A', 'GFRA2', 'GPR26', 
+              'NTRK2', 'NTRK3', 'PIEZO1', 'PIEZO2',  'SDC1', 
+              'SLC17A8', 'TAC1', 'TH', 'ZNF521')
+
+# Create the dotplot
+dotplot <- DotPlot(Sharma, features = features) + 
+  RotatedAxis() + 
+  theme(axis.text = element_text(size = 10))
+
+# Display the dotplot
+print(dotplot)
+
+# Save the dotplot as an SVG file
+svg_file <- "C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/SF8B.svg"
+ggsave(svg_file, plot = dotplot, device = "svg", height = 4, width = 11)
+
+```
+
+```{r,fig.height=4, fig.width=10}
+library(Seurat)
+library(ggplot2)
+
+# Define the features
+features <- c('ATF3', 'CALCA', 'GFRA2', 'PIEZO2', 
+              'SLC17A8', 'TH', 'ZNF521')
+
+# Create the dotplot
+dotplot <- DotPlot(Sharma, features = features) + 
+  RotatedAxis() + 
+  theme(axis.text = element_text(size = 10))
+
+# Display the dotplot
+print(dotplot)
+
+# Save the dotplot as an SVG file
+svg_file <- "C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Manuscript and figs/Submmision/Nature neuroscience/Final/Revision/Resubmission/20240716_Final/new_plot/SF8B_new.svg"
+#ggsave(svg_file, plot = dotplot, device = "svg", height = 4.5, width = 6)
+
+```
+
+
+```{r, fig.height=4.8, fig.width=8}
+# Plot violins 
+
+VlnPlot(
+  Sharma,
+  c('PROKR2'),
+  slot = "counts",
+  pt.size = 0.0,
+  group.by = "Cell.ident",
+) #+
+```
+
+```{r, fig.height=8, fig.width=8}
+# FeaturePlot
+FeaturePlot(Sharma, features = c('HRH1'))/
+  DimPlot(Sharma,reduction = "umap",label = TRUE,group.by = "Cell.ident",pt.size = 1)
+```
+```{r}
+## find marker genes
+Idents(Sharma) <- Sharma$Cell.ident
+Mrk.all.LR <- FindAllMarkers(Sharma, only.pos = TRUE, 
+                             test.use = "LR",
+                             logfc.threshold = 0.70)
+
+Mrk.all.LR %>%
+  group_by(cluster) %>%
+  top_n(n = 50, wt = avg_log2FC) -> top10.raw
+
+table(top10.raw$cluster)
+
+```
+
+```{r,fig.height=4, fig.width=7}
+## Dotplot example
+## for zeroplot use ['C11orf97','C1orf210','C11orf88','C10orf67','C16orf92','C16orf96','C10orf62','CCDC179','MAGEA10','CTXND2']
+#TRPM8_common ['TRPM8', 'PCDH9','SLC24A2', 'NTRK2', 'HTRA1', 'MAP2', 'PCSK1']
+#TRPM8_unique ['CHCHD10', 'FOXP2', 'ABI3BP', 'RPL3', 'RPRM', 'HJURP', 'NAP1L5', 'EIF3F', 'TOMM70', 'PCP4'
+
+DotPlot(Sharma, features = c('STUM', 'TRPM8', 'ENTPD3', 'WSB2', 'PCDH9', 'CA8', 'SEMA3F', 'KCNK3', 'SIRPA', 'LIMCH1')) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+```
+```{r,fig.height=4, fig.width=7}
+## Dotplot example
+
+DotPlot(Sharma, features = c('ETV1', 'HPCAL1', 'IL31RA', 'OSMR', 'SST', 'CAMK4', 'CCK', 'GFRA3', 'HRH1','DDAH1')) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+```
+
+```{r,fig.height=1.56, fig.width=1.07}
+expression =GetAssayData(Sharma)
+write.csv(expression, file = "C:/Users/huash/Desktop/mouse.csv")
+```
+
+```{r,fig.height=1.56, fig.width=1.07}
+#TRPM8 ['STUM', 'TRPM8', 'ENTPD3', 'WSB2', 'PCDH9', CA8', 'SEMA3F', 'KCNK3', 'SIRPA', 'LIMCH1']
+#C.LTMR ['CASQ2', 'ZNF521', 'GREM1', 'SERPINA1', 'P2RY1', 'ADGRG1', 'SLIT1', 'RSPO2', 'CNTNAP5', 'DPP6']
+#NP1 ['CDH1', 'GFRA2', 'SCN11A', 'MRGPRX1', 'AHNAK', 'OSMR', 'CADPS', 'PLCB3', 'CD24', 'NRCAM']
+#NP2 ['MRGPRX4',	'MRGPRX3',	'RASSF6',	'GFRA1',	'TIMELESS',	'KCNK18',	'CEMIP',	'IGSF3',	'SCN3B',	'FSTL1']
+#NP3 ['SST',	'HTR3A',	'GFRA3',	'CCK',	'CHRNA3',	'IL31RA',	'CALCB',	'NOS1',	'FKBP1B',	'DGKH']
+#PEP1.3 ['TAC1',	'SCRG1',	'ATP2B4',	'TRPA1',	'TMBIM1',	'CALCA',	'LITAF',	'CAMK4',	'CELF4',	'UCP2']
+#PEPH4.15['AQP1',	'ATP2B4',	'VAT1',	'SPEG',	'TAC1',	'OPRM1', 'RELN',	'PTPRT',	'NCAM1',	'RIMS3']
+#PEPH4 ['TSPAN18',	'EHD3',	'CAMK1D',	'NTRK1',	'SYT6',	'SYNPO',	'TTL',	'VAT1L',	'LYNX1',	'PCDH9']
+#PEP3 ['KIT',	'TMEM273',	'TSPAN33',	'DOC2A',	'SCG2',	'GLDN',	'SLC7A14',	'MME',	'OPCML',	'BCAM']
+#PEPH5 ['CHRNA7',	'CST3',	'CD9',	'AKR1C2',	'CPNE4',	'RBFOX3',	'NGFR',	'NTRK1',	'HBA2',	'AQP1']
+#PEPH8 ['NTRK3','ELMO1',	'S100A4',	'SUSD2',	'NGFR',	'NPTX1',	'CPNE6',	'S100A16',	'PCP4',	'P2RX3']
+#PEPH0 ['LXN',	'TMEM273',	'FABP3',	'NDUFA4',	'NMB', 'CST3', 'EXOC1L', 'SLC7A14', 'TMBIM1','SCG2']
+#Ad.LTMR ['SCN5A',	'KCNV1',	'PCDH7',	'DCHS2',	'KCNAB1',	'PLXNA2',	'GPX2',	'CBLN2',	'NTRK2'	,'KIRREL3']
+#Ab.LTMR ['SFRP1',	'NEFL',	'SPP1',	'NEFH',	'S100B',	'NEFM',	'BAIAP2L1',	'MDH1',	'MAP7D2',	'CPNE6']
+#Propr ['REEP5',	'ATP11A',	'WLS',	'KANK4',	'PVALB',	'MCTP2',	'GPRC5B',	'SPP1',	'SLIT2',	'OXR1']
+#Un.Gi ['TRIM54',	'ATF3',	'SEMA6A',	'ADCYAP1',	'UCN',	'GADD45A',	'FLRT3',	'FAM171B',	'MCAM',	'ANO5']
+
+
+DotPlot(Sharma, features = c('LXN',	'C11orf97',	'FABP3',	'NDUFA4',	'NMB', 'CST3', 'EXOC1L', 'SLC7A14', 'TMBIM1','SCG2'), dot.scale = 2,cols = c("lightgrey", "seagreen")) + RotatedAxis() + theme(axis.text = element_blank()) + theme(axis.title = element_blank()) + theme(legend.position="none") + theme(axis.text.x = element_blank()) + theme(axis.line.x.bottom=element_line(size=0.15))+theme(axis.line.y.left =element_line(size=0.15))+theme(axis.ticks = element_line( size = 0.15))
+
+images = DotPlot(Sharma, features = c('LXN',	'C11orf97',	'FABP3',	'NDUFA4',	'NMB', 'CST3', 'EXOC1L', 'SLC7A14', 'TMBIM1','SCG2'), dot.scale = 2,cols = c("lightgrey", "seagreen")) + RotatedAxis() + theme(axis.text = element_blank()) + theme(axis.title = element_blank()) +  theme(legend.position="none")+ theme(axis.text.x = element_blank())+ theme(axis.line.x.bottom=element_line(size=0.2))+theme(axis.line.y.left=element_line(size=0.2))+theme(axis.ticks = element_line(size = 0.2))+theme(axis.ticks.length=unit(.05, "cm"))
+
+ggsave(file = "C:/Users/huash/Desktop/myplot.svg", plot=images)
+
+```
+
+```{r,fig.height=1.56, fig.width=1.07}
+
+images = DotPlot(Sharma, features = c('STUM', 'TRPM8', 'ENTPD3', 'WSB2', 'PCDH9', 'CA8', 'SEMA3F', 'KCNK3', 'SIRPA', 'LIMCH1'), dot.scale = 2,cols = c("lightgrey", "seagreen")) + RotatedAxis() + theme(axis.text = element_text(size = 10)) 
+ggsave(file = "C:/Users/huash/Desktop/myplot.svg", plot=images)
+
+```
+
+

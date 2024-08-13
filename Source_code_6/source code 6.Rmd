@@ -1,0 +1,1514 @@
+---
+title: "hDRG datasets comparison"
+author: "H. Yu"
+date: "8/5/2023"
+output: html_document
+---
+
+```{r}
+library(Seurat)
+library(gplots)
+library(heatmaply)
+```
+
+```{r}
+# read datasets
+
+nucleuseq_elife_metadata <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/hDRG_nucleuseq_elife_metadata_downsampling.csv", row.names = 1)
+
+nucleuseq_elife_rawcounts <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/hDRG_nucleuseq_elife_rawcounts_downsampling.csv", row.names = 1)
+
+nucleuseq_genetch_metadata <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/hDRG_nucleuseq_genetch_metadata_downsampling.csv", row.names = 1)
+
+nucleuseq_genetch_rawcounts <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/hDRG_nucleuseq_genetch_rawcounts_downsampling.csv", row.names = 1)
+
+somaseq_metadata <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/hDRG_somaseq_metadata_downsampling.csv", row.names = 1)
+
+somaseq_rawcounts <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/hDRG_somaseq_rawcounts_downsampling.csv", row.names = 1)
+
+spatialseq_metadata <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/hDRG_spatialseq_metadata_downsampling.csv", row.names = 1)
+
+spatialseq_rawcounts <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/hDRG_spatialseq_rawcounts_downsampling.csv", row.names = 1)
+
+```
+
+
+```{r}
+Seurat_nucleuseq_elife <- CreateSeuratObject(counts = nucleuseq_elife_rawcounts, meta.data = nucleuseq_elife_metadata,  min.cells = 3, min.features = 200)
+
+Seurat_nucleuseq_genetch <- CreateSeuratObject(counts = nucleuseq_genetch_rawcounts, meta.data = nucleuseq_genetch_metadata,  min.cells = 3, min.features = 200)
+
+Seurat_somaseq <- CreateSeuratObject(counts = somaseq_rawcounts, meta.data = somaseq_metadata,  min.cells = 3, min.features = 200)
+
+Seurat_spatialseq <- CreateSeuratObject(counts = spatialseq_rawcounts, meta.data = spatialseq_metadata,  min.cells = 3, min.features = 200)
+
+```
+
+```{r}
+hDRG_list <- list(Seurat_nucleuseq_elife = Seurat_nucleuseq_elife, Seurat_nucleuseq_genetch = Seurat_nucleuseq_genetch, Seurat_somaseq = Seurat_somaseq, Seurat_spatialseq = Seurat_spatialseq)
+
+```
+
+```{r}
+for (i in 1:length(hDRG_list)) {
+    hDRG_list[[i]] <- NormalizeData(hDRG_list[[i]], verbose = FALSE)
+    hDRG_list[[i]] <- FindVariableFeatures(hDRG_list[[i]], selection.method = "vst", nfeatures = 2000,
+        verbose = FALSE)
+}
+```
+
+
+```{r}
+hDRG_Seurat_somaseq <- ScaleData(hDRG_list[["Seurat_somaseq"]], verbose = FALSE)
+hDRG_Seurat_somaseq <- RunPCA(hDRG_Seurat_somaseq, npcs = 30, verbose = FALSE)
+hDRG_Seurat_somaseq <- RunUMAP(hDRG_Seurat_somaseq, reduction = "pca", dims = 1:30, verbose = FALSE)
+```
+
+```{r}
+hDRG_Seurat_nucleuseq_elife <- ScaleData(hDRG_list[["Seurat_nucleuseq_elife"]], verbose = FALSE)
+hDRG_Seurat_nucleuseq_elife <- RunPCA(hDRG_Seurat_nucleuseq_elife, npcs = 30, verbose = FALSE)
+hDRG_Seurat_nucleuseq_elife <- RunUMAP(hDRG_Seurat_nucleuseq_elife, reduction = "pca", dims = 1:30, verbose = FALSE)
+```
+
+
+```{r}
+hDRG_Seurat_nucleuseq_genetch <- ScaleData(hDRG_list[["Seurat_nucleuseq_genetch"]], verbose = FALSE)
+hDRG_Seurat_nucleuseq_genetch <- RunPCA(hDRG_Seurat_nucleuseq_genetch, npcs = 30, verbose = FALSE)
+hDRG_Seurat_nucleuseq_genetch <- RunUMAP(hDRG_Seurat_nucleuseq_genetch, reduction = "pca", dims = 1:30, verbose = FALSE)
+```
+
+
+```{r}
+hDRG_Seurat_spatialseq <- ScaleData(hDRG_list[["Seurat_spatialseq"]], verbose = FALSE)
+hDRG_Seurat_spatialseq <- RunPCA(hDRG_Seurat_spatialseq, npcs = 30, verbose = FALSE)
+hDRG_Seurat_spatialseq <- RunUMAP(hDRG_Seurat_spatialseq, reduction = "pca", dims = 1:30, verbose = FALSE)
+```
+
+
+
+##=========================================================================
+##Figure plot 
+
+#Figure 3
+### comparision with Seurat_nucleuseq_elife
+
+```{r}
+hDRG.query <- hDRG_list[["Seurat_nucleuseq_elife"]]
+hDRG.anchors <- FindTransferAnchors(reference = hDRG_Seurat_somaseq, query = hDRG.query,
+    dims = 1:30, reference.reduction = "pca")
+predictions <- TransferData(anchorset = hDRG.anchors, refdata = hDRG_Seurat_somaseq$celltype,
+    dims = 1:30)
+hDRG.query <- AddMetaData(hDRG.query, metadata = predictions)
+```
+
+```{r}
+hDRG.query_cluster <- unique(unname(hDRG.query$celltype)) 
+hDRG.reference_cluster <- unique(unname(hDRG_Seurat_somaseq$celltype))
+
+
+celltype_comparison <-list()
+
+my_vector <-c(query_name='H7', reference_name='hPEP.0', hPEP.0 = unname(hDRG.query[,hDRG.query$celltype=="H7"][[]][paste0("prediction.score.","hPEP.0")]))
+
+df <- data.frame(Value = my_vector)
+
+celltype_comparison <- append(celltype_comparison, my_vector)
+ 
+
+```
+
+```{r}
+hDRG.query_cluster <- unique(unname(hDRG.query$celltype))
+hDRG.reference_cluster <- unique(unname(hDRG_Seurat_somaseq$celltype))
+hDRG.reference_cluster <- gsub("/", ".", hDRG.reference_cluster)
+
+query_name_list <- list()
+reference_name_list <- list()
+df_list <- list()
+
+for (query_cluster in hDRG.query_cluster) {
+  for (reference_cluster in hDRG.reference_cluster) {
+    # Create the my_vector for each combination of query_cluster and reference_cluster
+    query_name = query_cluster
+    reference_name = reference_cluster
+    
+   #my_vector <-c(x = unname(hDRG.query[,hDRG.query$celltype=="H7"]$prediction.score.hPEP.0))
+   #df <- data.frame(Value = my_vector)
+                     
+    #df = data.frame(c(x=unname(hDRG.query[,hDRG.query$celltype==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1])))
+                     
+    df = data.frame(value=unlist(hDRG.query[,hDRG.query$celltype==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1]))
+    
+    
+    # Append the data frame to the celltype_comparison list
+    query_name_list <- append(query_name_list, query_name)
+    reference_name_list <- append(reference_name_list,  reference_name)
+    df_list <- append(df_list,  df)
+  }
+}
+
+comparison_list = list(query_celltype=query_name_list, reference_celltype=reference_name_list, value=df_list)
+
+# Print the list of data frames
+
+```
+
+
+
+
+```{r, fig.width=3, fig.height=3}
+# Load the necessary library
+library(ggplot2)
+
+# Assuming you have a list of X ggplot objects (ggplot1, ggplot2, ..., ggplotX)
+X <- length(hDRG.query_cluster)*length(hDRG.reference_cluster)  # Replace 'X' with the number of ggplot objects you have
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+for (i in seq_along(comparison_list$value)) {
+  df <- data.frame(Value = unlist(comparison_list$value[i]))
+  p <- ggplot(df, aes(x = "", y = Value)) +
+    geom_violin(fill = "skyblue") +
+    scale_y_continuous(name = comparison_list$query_celltype[i], limits = c(0, 1)) +
+    xlab(comparison_list$reference_celltype[i]) +
+    theme_minimal() +
+    theme(panel.border = element_rect(color = "black", fill = NA, size = 1),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank())
+  
+  A[[i]] <- p
+}
+
+#ggplot_list <- append(ggplot_list,plot)
+
+```
+
+
+```{r, fig.width=30, fig.height=30}
+
+### generate the heatmap matrix
+
+
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+
+comparison_list$query_celltype[[160]]
+comparison_list$reference_celltype[[160]]
+mean(comparison_list$value[[150]])
+#ggplot_list <- append(ggplot_list,plot)
+
+
+
+
+# Define the row names (a, b, c, d, ...)
+row_names <- hDRG.query_cluster # Change 4 to the desired number of rows
+
+# Define the column names (m, n, o, p, ...)
+column_names <- hDRG.reference_cluster # Change 16 to the desired number of columns
+
+# Create an empty data frame with the specified row and column names
+empty_df <- data.frame(matrix(ncol = length(column_names), nrow = length(row_names)))
+rownames(empty_df) <- row_names
+colnames(empty_df) <- column_names
+
+# Assuming ZX is a list with the same length as the number of rows and each element is a vector with the same length as the number of columns
+# Example: ZX <- list(a = c(1, 2, 3, 4), b = c(5, 6, 7, 8), c = c(9, 10, 11, 12), d = c(13, 14, 15, 16))
+
+for (i in 1:length(comparison_list$value)) {
+  empty_df[comparison_list$query_celltype[[i]], comparison_list$reference_celltype[[i]]] <- mean(comparison_list$value[[i]])
+}
+
+print(empty_df)
+
+write.csv(empty_df, "C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/plots/somaseq_nucleuseq_elife_matrix.csv" )
+
+```
+
+
+```{r, fig.width=7, fig.height=7}
+
+# Load the heatmaply library
+library(heatmaply)
+
+# Ensure empty_df is defined
+# Example:
+# empty_df <- data.frame(matrix(runif(100), nrow=10))
+
+# Convert the DataFrame to a matrix
+rearranged_matrix <- as.matrix(empty_df)
+
+# Create an interactive heatmap and save as HTML
+heatmaply(rearranged_matrix)
+
+
+
+#row_order <- c("H2", "H1", "H5", "H7", "H4", "H6", "H3", "H9", "H8", "H10", "H11", "H12", "H13", "H14", "H15")
+
+#col_order <- c("hPEP.TRPV1.A1.2", "hAd.LTMR","hNP1", "hPEP.SST", "hPEP.KIT", "hPEP.PIEZOh","hPEP.0","hPEP.TRPV1.A1.1",  "hPEP.CHRNA7", "hPEP.NTRK3", "hNP2", "hC.LTMR", "hATF3", "hTRPM8", "hAb.LTMR", "hPropr")
+
+
+
+```
+
+
+#Figure 3A
+```{r}
+# Define the custom order for rows and columns based on the image
+row_order <- c("H2", "H1", "H5", "H7", "H4", "H6", "H3", "H9", "H8", "H11", "H10", "H15", "H12", "H14", "H13")
+col_order <- c("hPEP.TRPV1.A1.2", "hAd.LTMR","hNP1", "hPEP.SST", "hPEP.KIT", "hPEP.PIEZOh","hPEP.0","hPEP.TRPV1.A1.1",  "hPEP.CHRNA7", "hPEP.NTRK3", "hNP2", "hC.LTMR", "hATF3", "hTRPM8", "hAb.LTMR", "hPropr")
+
+# Reorder the DataFrame according to the specified order
+empty_df <- empty_df[row_order, col_order]
+
+# Convert the DataFrame to a matrix
+rearranged_matrix <- as.matrix(empty_df)
+
+heatmaply(rearranged_matrix, dendrogram="none")
+
+```
+
+
+
+
+
+
+###comparision with Seurat_nucleuseq_genetch
+```{r}
+hDRG.query <- hDRG_list[["Seurat_nucleuseq_genetch"]]
+hDRG.anchors <- FindTransferAnchors(reference = hDRG_Seurat_somaseq, query = hDRG.query,
+    dims = 1:30, reference.reduction = "pca")
+predictions <- TransferData(anchorset = hDRG.anchors, refdata = hDRG_Seurat_somaseq$celltype,
+    dims = 1:30)
+hDRG.query <- AddMetaData(hDRG.query, metadata = predictions)
+```
+
+
+```{r}
+hDRG.query_cluster <- unique(unname(hDRG.query$celltype))
+hDRG.reference_cluster <- unique(unname(hDRG_Seurat_somaseq$celltype))
+hDRG.reference_cluster <- gsub("/", ".", hDRG.reference_cluster)
+
+query_name_list <- list()
+reference_name_list <- list()
+df_list <- list()
+
+for (query_cluster in hDRG.query_cluster) {
+  for (reference_cluster in hDRG.reference_cluster) {
+    # Create the my_vector for each combination of query_cluster and reference_cluster
+    query_name = query_cluster
+    reference_name = reference_cluster
+    
+   #my_vector <-c(x = unname(hDRG.query[,hDRG.query$celltype=="H7"]$prediction.score.hPEP.0))
+   #df <- data.frame(Value = my_vector)
+                     
+    #df = data.frame(c(x=unname(hDRG.query[,hDRG.query$celltype==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1])))
+                     
+    df = data.frame(value=unlist(hDRG.query[,hDRG.query$celltype==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1]))
+    
+    
+    # Append the data frame to the celltype_comparison list
+    query_name_list <- append(query_name_list, query_name)
+    reference_name_list <- append(reference_name_list,  reference_name)
+    df_list <- append(df_list,  df)
+  }
+}
+
+comparison_list = list(query_celltype=query_name_list, reference_celltype=reference_name_list, value=df_list)
+
+# Print the list of data frames
+
+```
+
+
+
+
+```{r, fig.width=3, fig.height=3}
+# Load the necessary library
+library(ggplot2)
+
+# Assuming you have a list of X ggplot objects (ggplot1, ggplot2, ..., ggplotX)
+X <- length(hDRG.query_cluster)*length(hDRG.reference_cluster)  # Replace 'X' with the number of ggplot objects you have
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+for (i in seq_along(comparison_list$value)) {
+  df <- data.frame(Value = unlist(comparison_list$value[i]))
+  p <- ggplot(df, aes(x = "", y = Value)) +
+    geom_violin(fill = "skyblue") +
+    scale_y_continuous(name = comparison_list$query_celltype[i], limits = c(0, 1)) +
+    xlab(comparison_list$reference_celltype[i]) +
+    theme_minimal() +
+    theme(panel.border = element_rect(color = "black", fill = NA, size = 1),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank())
+  
+  A[[i]] <- p
+}
+
+#ggplot_list <- append(ggplot_list,plot)
+
+```
+
+
+```{r, fig.width=2, fig.height=2}
+# Load the necessary library
+library(ggplot2)
+
+# Assuming you have a list A containing ggplot plots
+# A <- list(p1, p2, ..., pN)
+
+# Define a directory to save the plots
+# Replace "path/to/your/directory" with the actual directory path where you want to save the plots
+save_dir <- "C:/Users/huash/Desktop/test"
+
+# Use a for loop to save all the plots in the list
+for (i in seq_along(A)) {
+  # Create the file name for the plot based on the index (i)
+  file_name <- paste0("plot_", i, ".png")
+  
+  # Set the full file path
+  full_path <- file.path(save_dir, file_name)
+  
+  # Save the plot using ggsave
+  ggsave(full_path, plot = A[[i]], width = 3, height = 3, dpi = 300)
+}
+
+
+```
+```{r, fig.width=30, fig.height=30}
+
+library(patchwork)
+library(ggplot2)
+
+
+# Combine the ggplot objects from the A list
+combined_plot <- wrap_plots(A, ncol = 16)
+
+# Save to PDF
+ggsave("C:/Users/huash/Desktop/test_nucleuseq_genetch.pdf", combined_plot, width = 30, height = 30)
+
+
+```
+
+```{r, fig.width=30, fig.height=30}
+
+### generate the heatmap matrix
+
+
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+
+comparison_list$query_celltype[[160]]
+comparison_list$reference_celltype[[160]]
+mean(comparison_list$value[[150]])
+#ggplot_list <- append(ggplot_list,plot)
+
+
+
+
+# Define the row names (a, b, c, d, ...)
+row_names <- hDRG.query_cluster # Change 4 to the desired number of rows
+
+# Define the column names (m, n, o, p, ...)
+column_names <- hDRG.reference_cluster # Change 16 to the desired number of columns
+
+# Create an empty data frame with the specified row and column names
+empty_df <- data.frame(matrix(ncol = length(column_names), nrow = length(row_names)))
+rownames(empty_df) <- row_names
+colnames(empty_df) <- column_names
+
+# Assuming ZX is a list with the same length as the number of rows and each element is a vector with the same length as the number of columns
+# Example: ZX <- list(a = c(1, 2, 3, 4), b = c(5, 6, 7, 8), c = c(9, 10, 11, 12), d = c(13, 14, 15, 16))
+
+for (i in 1:length(comparison_list$value)) {
+  empty_df[comparison_list$query_celltype[[i]], comparison_list$reference_celltype[[i]]] <- mean(comparison_list$value[[i]])
+}
+
+print(empty_df)
+
+write.csv(empty_df, "E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/plots/omaseq_nucleuseq_genetch_matrix.csv" )
+
+```
+
+```{r, fig.width=7, fig.height=7}
+
+
+```
+
+
+```{r, fig.width=7, fig.height=7}
+# Convert the DataFrame to a matrix
+rearranged_matrix <- as.matrix(empty_df)
+
+# Create a heatmap without hierarchical clustering
+
+
+
+pdf("E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/plots/somaseq_nucleuseq_genetch_heatmap.pdf",  width = 5, height = 5)
+
+
+par(mar=c(6, 5, 5, 3))
+
+#heatmap(rearranged_matrix, Rowv = NA, Colv = NA, scale = "none", cexRow = 0.4,  cexCol = 0.6)
+
+heatmaply(rearranged_matrix)
+
+dev.off()
+```
+
+
+
+
+
+
+
+
+
+###comparision with Seurat_spatialseq
+```{r}
+hDRG.query <- hDRG_list[["Seurat_spatialseq"]]
+hDRG.anchors <- FindTransferAnchors(reference = hDRG_Seurat_somaseq, query = hDRG.query,
+    dims = 1:30, reference.reduction = "pca")
+predictions <- TransferData(anchorset = hDRG.anchors, refdata = hDRG_Seurat_somaseq$celltype,
+    dims = 1:30)
+hDRG.query <- AddMetaData(hDRG.query, metadata = predictions)
+```
+
+
+```{r}
+hDRG.query_cluster <- unique(unname(hDRG.query$celltype))
+hDRG.reference_cluster <- unique(unname(hDRG_Seurat_somaseq$celltype))
+hDRG.reference_cluster <- gsub("/", ".", hDRG.reference_cluster)
+
+query_name_list <- list()
+reference_name_list <- list()
+df_list <- list()
+
+for (query_cluster in hDRG.query_cluster) {
+  for (reference_cluster in hDRG.reference_cluster) {
+    # Create the my_vector for each combination of query_cluster and reference_cluster
+    query_name = query_cluster
+    reference_name = reference_cluster
+    
+   #my_vector <-c(x = unname(hDRG.query[,hDRG.query$celltype=="H7"]$prediction.score.hPEP.0))
+   #df <- data.frame(Value = my_vector)
+                     
+    #df = data.frame(c(x=unname(hDRG.query[,hDRG.query$celltype==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1])))
+                     
+    df = data.frame(value=unlist(hDRG.query[,hDRG.query$celltype==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1]))
+    
+    
+    # Append the data frame to the celltype_comparison list
+    query_name_list <- append(query_name_list, query_name)
+    reference_name_list <- append(reference_name_list,  reference_name)
+    df_list <- append(df_list,  df)
+  }
+}
+
+comparison_list = list(query_celltype=query_name_list, reference_celltype=reference_name_list, value=df_list)
+
+# Print the list of data frames
+
+```
+
+
+
+
+```{r, fig.width=3, fig.height=3}
+# Load the necessary library
+library(ggplot2)
+
+# Assuming you have a list of X ggplot objects (ggplot1, ggplot2, ..., ggplotX)
+X <- length(hDRG.query_cluster)*length(hDRG.reference_cluster)  # Replace 'X' with the number of ggplot objects you have
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+for (i in seq_along(comparison_list$value)) {
+  df <- data.frame(Value = unlist(comparison_list$value[i]))
+  p <- ggplot(df, aes(x = "", y = Value)) +
+    geom_violin(fill = "skyblue") +
+    scale_y_continuous(name = comparison_list$query_celltype[i], limits = c(0, 1)) +
+    xlab(comparison_list$reference_celltype[i]) +
+    theme_minimal() +
+    theme(panel.border = element_rect(color = "black", fill = NA, size = 1),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank())
+  
+  A[[i]] <- p
+}
+
+#ggplot_list <- append(ggplot_list,plot)
+
+```
+
+
+```{r, fig.width=2, fig.height=2}
+# Load the necessary library
+library(ggplot2)
+
+# Assuming you have a list A containing ggplot plots
+# A <- list(p1, p2, ..., pN)
+
+# Define a directory to save the plots
+# Replace "path/to/your/directory" with the actual directory path where you want to save the plots
+save_dir <- "C:/Users/huash/Desktop/test"
+
+# Use a for loop to save all the plots in the list
+for (i in seq_along(A)) {
+  # Create the file name for the plot based on the index (i)
+  file_name <- paste0("plot_", i, ".png")
+  
+  # Set the full file path
+  full_path <- file.path(save_dir, file_name)
+  
+  # Save the plot using ggsave
+  ggsave(full_path, plot = A[[i]], width = 3, height = 3, dpi = 300)
+}
+
+
+```
+
+
+
+```{r, fig.width=30, fig.height=30}
+
+library(patchwork)
+library(ggplot2)
+
+
+# Combine the ggplot objects from the A list
+combined_plot <- wrap_plots(A, ncol = 16)
+
+# Save to PDF
+ggsave("C:/Users/huash/Desktop/test_spatialseq.pdf", combined_plot, width = 30, height = 30)
+
+
+```
+
+```{r, fig.width=30, fig.height=30}
+
+### generate the heatmap matrix
+
+
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+
+comparison_list$query_celltype[[160]]
+comparison_list$reference_celltype[[160]]
+mean(comparison_list$value[[150]])
+#ggplot_list <- append(ggplot_list,plot)
+
+
+
+
+# Define the row names (a, b, c, d, ...)
+row_names <- hDRG.query_cluster # Change 4 to the desired number of rows
+
+# Define the column names (m, n, o, p, ...)
+column_names <- hDRG.reference_cluster # Change 16 to the desired number of columns
+
+# Create an empty data frame with the specified row and column names
+empty_df <- data.frame(matrix(ncol = length(column_names), nrow = length(row_names)))
+rownames(empty_df) <- row_names
+colnames(empty_df) <- column_names
+
+# Assuming ZX is a list with the same length as the number of rows and each element is a vector with the same length as the number of columns
+# Example: ZX <- list(a = c(1, 2, 3, 4), b = c(5, 6, 7, 8), c = c(9, 10, 11, 12), d = c(13, 14, 15, 16))
+
+for (i in 1:length(comparison_list$value)) {
+  empty_df[comparison_list$query_celltype[[i]], comparison_list$reference_celltype[[i]]] <- mean(comparison_list$value[[i]])
+}
+
+print(empty_df)
+
+write.csv(empty_df, "E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/plots/somaseq_spatialseq_matrix.csv" )
+```
+
+```{r, fig.width=7, fig.height=7}
+
+
+```
+
+
+```{r, fig.width=7, fig.height=7}
+# Convert the DataFrame to a matrix
+rearranged_matrix <- as.matrix(empty_df)
+
+# Create a heatmap without hierarchical clustering
+
+
+
+pdf("E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/plots/somaseq_spatialseq_heatmap.pdf",  width = 5, height = 5)
+
+
+#heatmap(rearranged_matrix, Rowv = NA, Colv = NA, scale = "none", cexRow = 0.4,  cexCol = 0.6)
+
+heatmaply(rearranged_matrix)
+
+dev.off()
+```
+
+
+
+
+
+
+
+
+###comparision with Seurat_nucleuseq_genetch  &   Seurat_nucleuseq_elife
+```{r}
+hDRG.query <- hDRG_list[["Seurat_nucleuseq_genetch"]]
+hDRG.anchors <- FindTransferAnchors(reference = hDRG_Seurat_nucleuseq_elife, query = hDRG.query,
+    dims = 1:30, reference.reduction = "pca")
+predictions <- TransferData(anchorset = hDRG.anchors, refdata = hDRG_Seurat_nucleuseq_elife$celltype,
+    dims = 1:30)
+hDRG.query <- AddMetaData(hDRG.query, metadata = predictions)
+```
+
+
+```{r}
+hDRG.query_cluster <- unique(unname(hDRG.query$celltype))
+hDRG.reference_cluster <- unique(unname(hDRG_Seurat_nucleuseq_elife$celltype))
+hDRG.reference_cluster <- gsub("/", ".", hDRG.reference_cluster)
+
+query_name_list <- list()
+reference_name_list <- list()
+df_list <- list()
+
+for (query_cluster in hDRG.query_cluster) {
+  for (reference_cluster in hDRG.reference_cluster) {
+    # Create the my_vector for each combination of query_cluster and reference_cluster
+    query_name = query_cluster
+    reference_name = reference_cluster
+    
+   #my_vector <-c(x = unname(hDRG.query[,hDRG.query$celltype=="H7"]$prediction.score.hPEP.0))
+   #df <- data.frame(Value = my_vector)
+                     
+    #df = data.frame(c(x=unname(hDRG.query[,hDRG.query$celltype==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1])))
+                     
+    df = data.frame(value=unlist(hDRG.query[,hDRG.query$celltype==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1]))
+    
+    
+    # Append the data frame to the celltype_comparison list
+    query_name_list <- append(query_name_list, query_name)
+    reference_name_list <- append(reference_name_list,  reference_name)
+    df_list <- append(df_list,  df)
+  }
+}
+
+comparison_list = list(query_celltype=query_name_list, reference_celltype=reference_name_list, value=df_list)
+
+# Print the list of data frames
+
+```
+
+
+
+
+```{r, fig.width=3, fig.height=3}
+# Load the necessary library
+library(ggplot2)
+
+# Assuming you have a list of X ggplot objects (ggplot1, ggplot2, ..., ggplotX)
+X <- length(hDRG.query_cluster)*length(hDRG.reference_cluster)  # Replace 'X' with the number of ggplot objects you have
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+for (i in seq_along(comparison_list$value)) {
+  df <- data.frame(Value = unlist(comparison_list$value[i]))
+  p <- ggplot(df, aes(x = "", y = Value)) +
+    geom_violin(fill = "skyblue") +
+    scale_y_continuous(name = comparison_list$query_celltype[i], limits = c(0, 1)) +
+    xlab(comparison_list$reference_celltype[i]) +
+    theme_minimal() +
+    theme(panel.border = element_rect(color = "black", fill = NA, size = 1),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank())
+  
+  A[[i]] <- p
+}
+
+#ggplot_list <- append(ggplot_list,plot)
+
+```
+
+
+```{r, fig.width=2, fig.height=2}
+# Load the necessary library
+library(ggplot2)
+
+# Assuming you have a list A containing ggplot plots
+# A <- list(p1, p2, ..., pN)
+
+# Define a directory to save the plots
+# Replace "path/to/your/directory" with the actual directory path where you want to save the plots
+save_dir <- "C:/Users/huash/Desktop/test"
+
+# Use a for loop to save all the plots in the list
+for (i in seq_along(A)) {
+  # Create the file name for the plot based on the index (i)
+  file_name <- paste0("plot_", i, ".png")
+  
+  # Set the full file path
+  full_path <- file.path(save_dir, file_name)
+  
+  # Save the plot using ggsave
+  ggsave(full_path, plot = A[[i]], width = 3, height = 3, dpi = 300)
+}
+
+
+```
+
+
+
+```{r, fig.width=30, fig.height=30}
+
+library(patchwork)
+library(ggplot2)
+
+
+# Combine the ggplot objects from the A list
+combined_plot <- wrap_plots(A, ncol = 15)
+
+# Save to PDF
+ggsave("C:/Users/huash/Desktop/test_Seurat_nucleuseq_genetch_Seurat_nucleuseq_elife.pdf", combined_plot, width = 30, height = 30)
+
+
+```
+
+
+```{r, fig.width=30, fig.height=30}
+
+### generate the heatmap matrix
+
+
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+
+comparison_list$query_celltype[[160]]
+comparison_list$reference_celltype[[160]]
+mean(comparison_list$value[[150]])
+#ggplot_list <- append(ggplot_list,plot)
+
+
+
+
+# Define the row names (a, b, c, d, ...)
+row_names <- hDRG.query_cluster # Change 4 to the desired number of rows
+
+# Define the column names (m, n, o, p, ...)
+column_names <- hDRG.reference_cluster # Change 16 to the desired number of columns
+
+# Create an empty data frame with the specified row and column names
+empty_df <- data.frame(matrix(ncol = length(column_names), nrow = length(row_names)))
+rownames(empty_df) <- row_names
+colnames(empty_df) <- column_names
+
+# Assuming ZX is a list with the same length as the number of rows and each element is a vector with the same length as the number of columns
+# Example: ZX <- list(a = c(1, 2, 3, 4), b = c(5, 6, 7, 8), c = c(9, 10, 11, 12), d = c(13, 14, 15, 16))
+
+for (i in 1:length(comparison_list$value)) {
+  empty_df[comparison_list$query_celltype[[i]], comparison_list$reference_celltype[[i]]] <- mean(comparison_list$value[[i]])
+}
+
+print(empty_df)
+
+write.csv(empty_df, "E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/plots/nucleuseq_genetch_nucleuseq_elife_matrix.csv" )
+
+```
+
+```{r, fig.width=7, fig.height=7}
+
+
+```
+
+
+```{r, fig.width=7, fig.height=7}
+# Convert the DataFrame to a matrix
+rearranged_matrix <- as.matrix(empty_df)
+
+# Create a heatmap without hierarchical clustering
+
+
+
+pdf("E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/plots/nucleuseq_genetch_nucleuseq_elife.pdf",  width = 5, height = 5)
+
+
+#heatmap(rearranged_matrix, Rowv = NA, Colv = NA, scale = "none", cexRow = 0.4,  cexCol = 0.6)
+
+heatmaply(rearranged_matrix)
+
+dev.off()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###comparision with Seurat_nucleuseq_genetch & spatialseq
+```{r}
+hDRG.query <- hDRG_list[["Seurat_nucleuseq_genetch"]]
+hDRG.anchors <- FindTransferAnchors(reference = hDRG_Seurat_spatialseq, query = hDRG.query,
+    dims = 1:30, reference.reduction = "pca")
+predictions <- TransferData(anchorset = hDRG.anchors, refdata = hDRG_Seurat_spatialseq$celltype,
+    dims = 1:30)
+hDRG.query <- AddMetaData(hDRG.query, metadata = predictions)
+```
+
+
+```{r}
+hDRG.query_cluster <- unique(unname(hDRG.query$celltype))
+hDRG.reference_cluster <- unique(unname(hDRG_Seurat_spatialseq$celltype))
+hDRG.reference_cluster <- gsub(" ", ".", hDRG.reference_cluster)
+hDRG.reference_cluster <- gsub("\\+", ".", hDRG.reference_cluster)
+hDRG.reference_cluster <- gsub("-", ".", hDRG.reference_cluster)
+
+query_name_list <- list()
+reference_name_list <- list()
+df_list <- list()
+
+for (query_cluster in hDRG.query_cluster) {
+  for (reference_cluster in hDRG.reference_cluster) {
+    # Create the my_vector for each combination of query_cluster and reference_cluster
+    query_name = query_cluster
+    reference_name = reference_cluster
+    
+   #my_vector <-c(x = unname(hDRG.query[,hDRG.query$celltype=="H7"]$prediction.score.hPEP.0))
+   #df <- data.frame(Value = my_vector)
+                     
+    #df = data.frame(c(x=unname(hDRG.query[,hDRG.query$celltype==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1])))
+                     
+    df = data.frame(value=unlist(hDRG.query[,hDRG.query$celltype==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1]))
+    
+    
+    # Append the data frame to the celltype_comparison list
+    query_name_list <- append(query_name_list, query_name)
+    reference_name_list <- append(reference_name_list,  reference_name)
+    df_list <- append(df_list,  df)
+  }
+}
+
+comparison_list = list(query_celltype=query_name_list, reference_celltype=reference_name_list, value=df_list)
+
+# Print the list of data frames
+
+```
+
+
+
+```{r, fig.width=3, fig.height=3}
+# Load the necessary library
+library(ggplot2)
+
+# Assuming you have a list of X ggplot objects (ggplot1, ggplot2, ..., ggplotX)
+X <- length(hDRG.query_cluster)*length(hDRG.reference_cluster)  # Replace 'X' with the number of ggplot objects you have
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+for (i in seq_along(comparison_list$value)) {
+  df <- data.frame(Value = unlist(comparison_list$value[i]))
+  p <- ggplot(df, aes(x = "", y = Value)) +
+    geom_violin(fill = "skyblue") +
+    scale_y_continuous(name = comparison_list$query_celltype[i], limits = c(0, 1)) +
+    xlab(comparison_list$reference_celltype[i]) +
+    theme_minimal() +
+    theme(panel.border = element_rect(color = "black", fill = NA, size = 1),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank())
+  
+  A[[i]] <- p
+}
+
+#ggplot_list <- append(ggplot_list,plot)
+
+```
+
+
+```{r, fig.width=2, fig.height=2}
+# Load the necessary library
+library(ggplot2)
+
+# Assuming you have a list A containing ggplot plots
+# A <- list(p1, p2, ..., pN)
+
+# Define a directory to save the plots
+# Replace "path/to/your/directory" with the actual directory path where you want to save the plots
+save_dir <- "C:/Users/huash/Desktop/test"
+
+# Use a for loop to save all the plots in the list
+for (i in seq_along(A)) {
+  # Create the file name for the plot based on the index (i)
+  file_name <- paste0("plot_", i, ".png")
+  
+  # Set the full file path
+  full_path <- file.path(save_dir, file_name)
+  
+  # Save the plot using ggsave
+  ggsave(full_path, plot = A[[i]], width = 3, height = 3, dpi = 300)
+}
+
+
+```
+
+
+
+```{r, fig.width=30, fig.height=30}
+
+library(patchwork)
+library(ggplot2)
+
+
+# Combine the ggplot objects from the A list
+combined_plot <- wrap_plots(A, ncol = length(hDRG.query_cluster))
+
+# Save to PDF
+ggsave("C:/Users/huash/Desktop/Seurat_nucleuseq_genetch_Seurat_spatialseqe.pdf", combined_plot, width = 30, height = 30)
+
+
+```
+
+```{r, fig.width=30, fig.height=30}
+
+### generate the heatmap matrix
+
+
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+
+#comparison_list$query_celltype[[160]]
+#comparison_list$reference_celltype[[160]]
+#mean(comparison_list$value[[150]])
+#ggplot_list <- append(ggplot_list,plot)
+
+
+
+
+# Define the row names (a, b, c, d, ...)
+row_names <- hDRG.query_cluster # Change 4 to the desired number of rows
+
+# Define the column names (m, n, o, p, ...)
+column_names <- hDRG.reference_cluster # Change 16 to the desired number of columns
+
+# Create an empty data frame with the specified row and column names
+empty_df <- data.frame(matrix(ncol = length(column_names), nrow = length(row_names)))
+rownames(empty_df) <- row_names
+colnames(empty_df) <- column_names
+
+# Assuming ZX is a list with the same length as the number of rows and each element is a vector with the same length as the number of columns
+# Example: ZX <- list(a = c(1, 2, 3, 4), b = c(5, 6, 7, 8), c = c(9, 10, 11, 12), d = c(13, 14, 15, 16))
+
+for (i in 1:length(comparison_list$value)) {
+  empty_df[comparison_list$query_celltype[[i]], comparison_list$reference_celltype[[i]]] <- mean(comparison_list$value[[i]])
+}
+
+print(empty_df)
+
+write.csv(empty_df, "E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/plots/nucleuseq_genetch_spatialseq_matrix.csv" )
+
+
+```
+
+```{r, fig.width=7, fig.height=7}
+
+
+```
+
+
+```{r, fig.width=7, fig.height=7}
+# Convert the DataFrame to a matrix
+rearranged_matrix <- as.matrix(empty_df)
+
+# Create a heatmap without hierarchical clustering
+
+
+
+pdf("E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/plots/Seurat_nucleuseq_genetch_Seurat_spatialseqe_heatmap.pdf",  width = 5, height = 5)
+
+
+#heatmap(rearranged_matrix, Rowv = NA, Colv = NA, scale = "none", cexRow = 0.4,  cexCol = 0.6)
+
+heatmaply(rearranged_matrix)
+
+dev.off()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###comparision with Seurat_nucleuseq_genetch & spatialseq
+```{r}
+hDRG.query <- hDRG_list[["Seurat_nucleuseq_genetch"]]
+hDRG.anchors <- FindTransferAnchors(reference = hDRG_Seurat_spatialseq, query = hDRG.query,
+    dims = 1:30, reference.reduction = "pca")
+predictions <- TransferData(anchorset = hDRG.anchors, refdata = hDRG_Seurat_spatialseq$celltype,
+    dims = 1:30)
+hDRG.query <- AddMetaData(hDRG.query, metadata = predictions)
+```
+
+
+```{r}
+hDRG.query_cluster <- unique(unname(hDRG.query$celltype))
+hDRG.reference_cluster <- unique(unname(hDRG_Seurat_spatialseq$celltype))
+hDRG.reference_cluster <- gsub(" ", ".", hDRG.reference_cluster)
+hDRG.reference_cluster <- gsub("\\+", ".", hDRG.reference_cluster)
+hDRG.reference_cluster <- gsub("-", ".", hDRG.reference_cluster)
+
+query_name_list <- list()
+reference_name_list <- list()
+df_list <- list()
+
+for (query_cluster in hDRG.query_cluster) {
+  for (reference_cluster in hDRG.reference_cluster) {
+    # Create the my_vector for each combination of query_cluster and reference_cluster
+    query_name = query_cluster
+    reference_name = reference_cluster
+    
+   #my_vector <-c(x = unname(hDRG.query[,hDRG.query$celltype=="H7"]$prediction.score.hPEP.0))
+   #df <- data.frame(Value = my_vector)
+                     
+    #df = data.frame(c(x=unname(hDRG.query[,hDRG.query$celltype==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1])))
+                     
+    df = data.frame(value=unlist(hDRG.query[,hDRG.query$celltype==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1]))
+    
+    
+    # Append the data frame to the celltype_comparison list
+    query_name_list <- append(query_name_list, query_name)
+    reference_name_list <- append(reference_name_list,  reference_name)
+    df_list <- append(df_list,  df)
+  }
+}
+
+comparison_list = list(query_celltype=query_name_list, reference_celltype=reference_name_list, value=df_list)
+
+# Print the list of data frames
+
+```
+
+
+
+```{r, fig.width=3, fig.height=3}
+# Load the necessary library
+library(ggplot2)
+
+# Assuming you have a list of X ggplot objects (ggplot1, ggplot2, ..., ggplotX)
+X <- length(hDRG.query_cluster)*length(hDRG.reference_cluster)  # Replace 'X' with the number of ggplot objects you have
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+for (i in seq_along(comparison_list$value)) {
+  df <- data.frame(Value = unlist(comparison_list$value[i]))
+  p <- ggplot(df, aes(x = "", y = Value)) +
+    geom_violin(fill = "skyblue") +
+    scale_y_continuous(name = comparison_list$query_celltype[i], limits = c(0, 1)) +
+    xlab(comparison_list$reference_celltype[i]) +
+    theme_minimal() +
+    theme(panel.border = element_rect(color = "black", fill = NA, size = 1),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank())
+  
+  A[[i]] <- p
+}
+
+#ggplot_list <- append(ggplot_list,plot)
+
+```
+
+
+```{r, fig.width=2, fig.height=2}
+# Load the necessary library
+library(ggplot2)
+
+# Assuming you have a list A containing ggplot plots
+# A <- list(p1, p2, ..., pN)
+
+# Define a directory to save the plots
+# Replace "path/to/your/directory" with the actual directory path where you want to save the plots
+save_dir <- "C:/Users/huash/Desktop/test"
+
+# Use a for loop to save all the plots in the list
+for (i in seq_along(A)) {
+  # Create the file name for the plot based on the index (i)
+  file_name <- paste0("plot_", i, ".png")
+  
+  # Set the full file path
+  full_path <- file.path(save_dir, file_name)
+  
+  # Save the plot using ggsave
+  ggsave(full_path, plot = A[[i]], width = 3, height = 3, dpi = 300)
+}
+
+
+```
+
+
+
+```{r, fig.width=30, fig.height=30}
+
+library(patchwork)
+library(ggplot2)
+
+
+# Combine the ggplot objects from the A list
+combined_plot <- wrap_plots(A, ncol = length(hDRG.reference_cluster))
+
+# Save to PDF
+ggsave("C:/Users/huash/Desktop/Seurat_nucleuseq_genetch_Seurat_spatialseq.pdf", combined_plot, width = 40, height = 40)
+
+
+```
+
+```{r, fig.width=30, fig.height=30}
+
+### generate the heatmap matrix
+
+
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+
+#comparison_list$query_celltype[[160]]
+#comparison_list$reference_celltype[[160]]
+#mean(comparison_list$value[[150]])
+#ggplot_list <- append(ggplot_list,plot)
+
+
+
+
+# Define the row names (a, b, c, d, ...)
+row_names <- hDRG.query_cluster # Change 4 to the desired number of rows
+
+# Define the column names (m, n, o, p, ...)
+column_names <- hDRG.reference_cluster # Change 16 to the desired number of columns
+
+# Create an empty data frame with the specified row and column names
+empty_df <- data.frame(matrix(ncol = length(column_names), nrow = length(row_names)))
+rownames(empty_df) <- row_names
+colnames(empty_df) <- column_names
+
+# Assuming ZX is a list with the same length as the number of rows and each element is a vector with the same length as the number of columns
+# Example: ZX <- list(a = c(1, 2, 3, 4), b = c(5, 6, 7, 8), c = c(9, 10, 11, 12), d = c(13, 14, 15, 16))
+
+for (i in 1:length(comparison_list$value)) {
+  empty_df[comparison_list$query_celltype[[i]], comparison_list$reference_celltype[[i]]] <- mean(comparison_list$value[[i]])
+}
+
+print(empty_df)
+
+write.csv(empty_df, "E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/plots/nucleuseq_genetch_spatialseqe_matrix.csv" )
+
+```
+
+```{r, fig.width=7, fig.height=7}
+
+
+```
+
+
+```{r, fig.width=7, fig.height=7}
+# Convert the DataFrame to a matrix
+rearranged_matrix <- as.matrix(empty_df)
+
+# Create a heatmap without hierarchical clustering
+
+
+
+pdf("E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/plots/Seurat_nucleuseq_genetch_Seurat_spatialseqe_heatmap.pdf",  width = 5, height = 5)
+
+
+#heatmap(rearranged_matrix, Rowv = NA, Colv = NA, scale = "none", cexRow = 0.4,  cexCol = 0.4)
+
+heatmaply(rearranged_matrix)
+
+
+dev.off()
+
+```
+
+
+
+
+
+
+###comparision with Seurat_nucleuseq_elife & spatialseq
+```{r}
+hDRG.query <- hDRG_list[["Seurat_nucleuseq_elife"]]
+hDRG.anchors <- FindTransferAnchors(reference = hDRG_Seurat_spatialseq, query = hDRG.query,
+    dims = 1:30, reference.reduction = "pca")
+predictions <- TransferData(anchorset = hDRG.anchors, refdata = hDRG_Seurat_spatialseq$celltype,
+    dims = 1:30)
+hDRG.query <- AddMetaData(hDRG.query, metadata = predictions)
+```
+
+
+```{r}
+hDRG.query_cluster <- unique(unname(hDRG.query$celltype))
+hDRG.reference_cluster <- unique(unname(hDRG_Seurat_spatialseq$celltype))
+hDRG.reference_cluster <- gsub(" ", ".", hDRG.reference_cluster)
+hDRG.reference_cluster <- gsub("\\+", ".", hDRG.reference_cluster)
+hDRG.reference_cluster <- gsub("-", ".", hDRG.reference_cluster)
+
+query_name_list <- list()
+reference_name_list <- list()
+df_list <- list()
+
+for (query_cluster in hDRG.query_cluster) {
+  for (reference_cluster in hDRG.reference_cluster) {
+    # Create the my_vector for each combination of query_cluster and reference_cluster
+    query_name = query_cluster
+    reference_name = reference_cluster
+    
+   #my_vector <-c(x = unname(hDRG.query[,hDRG.query$celltype=="H7"]$prediction.score.hPEP.0))
+   #df <- data.frame(Value = my_vector)
+                     
+    #df = data.frame(c(x=unname(hDRG.query[,hDRG.query$celltype==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1])))
+                     
+    df = data.frame(value=unlist(hDRG.query[,hDRG.query$celltype==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1]))
+    
+    
+    # Append the data frame to the celltype_comparison list
+    query_name_list <- append(query_name_list, query_name)
+    reference_name_list <- append(reference_name_list,  reference_name)
+    df_list <- append(df_list,  df)
+  }
+}
+
+comparison_list = list(query_celltype=query_name_list, reference_celltype=reference_name_list, value=df_list)
+
+# Print the list of data frames
+
+```
+
+
+
+```{r, fig.width=3, fig.height=3}
+# Load the necessary library
+library(ggplot2)
+
+# Assuming you have a list of X ggplot objects (ggplot1, ggplot2, ..., ggplotX)
+X <- length(hDRG.query_cluster)*length(hDRG.reference_cluster)  # Replace 'X' with the number of ggplot objects you have
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+for (i in seq_along(comparison_list$value)) {
+  df <- data.frame(Value = unlist(comparison_list$value[i]))
+  p <- ggplot(df, aes(x = "", y = Value)) +
+    geom_violin(fill = "skyblue") +
+    scale_y_continuous(name = comparison_list$query_celltype[i], limits = c(0, 1)) +
+    xlab(comparison_list$reference_celltype[i]) +
+    theme_minimal() +
+    theme(panel.border = element_rect(color = "black", fill = NA, size = 1),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank())
+  
+  A[[i]] <- p
+}
+
+#ggplot_list <- append(ggplot_list,plot)
+
+```
+
+
+```{r, fig.width=2, fig.height=2}
+# Load the necessary library
+library(ggplot2)
+
+# Assuming you have a list A containing ggplot plots
+# A <- list(p1, p2, ..., pN)
+
+# Define a directory to save the plots
+# Replace "path/to/your/directory" with the actual directory path where you want to save the plots
+save_dir <- "C:/Users/huash/Desktop/test"
+
+# Use a for loop to save all the plots in the list
+for (i in seq_along(A)) {
+  # Create the file name for the plot based on the index (i)
+  file_name <- paste0("plot_", i, ".png")
+  
+  # Set the full file path
+  full_path <- file.path(save_dir, file_name)
+  
+  # Save the plot using ggsave
+  ggsave(full_path, plot = A[[i]], width = 3, height = 3, dpi = 300)
+}
+
+
+```
+
+
+
+```{r, fig.width=30, fig.height=30}
+
+library(patchwork)
+library(ggplot2)
+
+
+# Combine the ggplot objects from the A list
+combined_plot <- wrap_plots(A, ncol = length(hDRG.reference_cluster))
+
+# Save to PDF
+ggsave("C:/Users/huash/Desktop/Seurat_nucleuseq_elife_Seurat_spatialseq.pdf", combined_plot, width = 30, height = 30)
+
+
+```
+
+
+```{r, fig.width=30, fig.height=30}
+
+### generate the heatmap matrix
+
+
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+
+#comparison_list$query_celltype[[160]]
+#comparison_list$reference_celltype[[160]]
+#mean(comparison_list$value[[150]])
+#ggplot_list <- append(ggplot_list,plot)
+
+
+
+
+# Define the row names (a, b, c, d, ...)
+row_names <- hDRG.query_cluster # Change 4 to the desired number of rows
+
+# Define the column names (m, n, o, p, ...)
+column_names <- hDRG.reference_cluster # Change 16 to the desired number of columns
+
+# Create an empty data frame with the specified row and column names
+empty_df <- data.frame(matrix(ncol = length(column_names), nrow = length(row_names)))
+rownames(empty_df) <- row_names
+colnames(empty_df) <- column_names
+
+# Assuming ZX is a list with the same length as the number of rows and each element is a vector with the same length as the number of columns
+# Example: ZX <- list(a = c(1, 2, 3, 4), b = c(5, 6, 7, 8), c = c(9, 10, 11, 12), d = c(13, 14, 15, 16))
+
+for (i in 1:length(comparison_list$value)) {
+  empty_df[comparison_list$query_celltype[[i]], comparison_list$reference_celltype[[i]]] <- mean(comparison_list$value[[i]])
+}
+
+print(empty_df)
+
+write.csv(empty_df, "E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/plots/nucleuseq_elife_spatialseq_matrix.csv" )
+
+```
+
+```{r, fig.width=7, fig.height=7}
+
+
+```
+
+
+```{r, fig.width=7, fig.height=7}
+# Convert the DataFrame to a matrix
+rearranged_matrix <- as.matrix(empty_df)
+
+# Create a heatmap without hierarchical clustering
+
+
+
+pdf("E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/hDRG neurons datasets/plots/Seurat_nucleuseq_elife_Seurat_spatialseqe_heatmap.pdf",  width = 5, height = 5)
+
+
+#heatmap(rearranged_matrix, Rowv = NA, Colv = NA, scale = "none", cexRow = 0.4,  cexCol = 0.4)
+
+heatmaply(rearranged_matrix)
+
+
+dev.off()
+
+```
+
+
+
+
+
+

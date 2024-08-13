@@ -1,0 +1,342 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+##===================================
+## Create Seurat object from raw data
+
+```{r}
+library(Seurat)
+library(ggplot2)
+library(dplyr)
+library(plyr)
+library(RColorBrewer) # good sets of color to replace default Seurat colors for better contrast
+```
+
+```{r}
+## load expression matrix and meta data from Dmitry
+load("C:/E/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Hs_LCM_Seurat_export_slim.RData")
+```
+
+#============================================================
+## Data intergration from different batchs/donors_start
+
+```{r}
+# splitting dataset into samples for anchor integration
+counts.N2.RL5 <- HS.counts.raw[,grepl("N2-RL5", colnames(HS.counts.raw))]
+counts.N2.RT1 <- HS.counts.raw[,grepl("N2-RT1", colnames(HS.counts.raw))]
+counts.N3.RL2 <- HS.counts.raw[,grepl("N3-RL2", colnames(HS.counts.raw))]
+counts.N3.RT1 <- HS.counts.raw[,grepl("N3-RT1", colnames(HS.counts.raw))]
+counts.N4.RL3 <- HS.counts.raw[,grepl("N4-RL3", colnames(HS.counts.raw))]
+counts.N4.RT1 <- HS.counts.raw[,grepl("N4-RT1", colnames(HS.counts.raw))]
+
+cdl.1 <- list('N2.RL5'=as(as.matrix(counts.N2.RL5),'dgCMatrix'),
+              'N2.RT1'=as(as.matrix(counts.N2.RT1),'dgCMatrix'),
+              'N3.RL2'=as(as.matrix(counts.N3.RL2),'dgCMatrix'),
+              'N3.RT1'=as(as.matrix(counts.N3.RT1),'dgCMatrix'),
+              'N4.RL3'=as(as.matrix(counts.N4.RL3),'dgCMatrix'),
+              'N4.RT1'=as(as.matrix(counts.N4.RT1),'dgCMatrix')
+)
+```
+
+```{r}
+# removing 'GLIA.DUBLETS' cells from all samples, GLIA, DUBLTETS are annotated by Dmitry based on his analysis
+for (i in 1:length(cdl.1)){
+  cdl.1[[i]] <- cdl.1[[i]][,!(colnames(cdl.1[[i]]) %in% cells.GLIA.DUBL)]
+}
+
+```
+
+```{r}
+# creating a list of seurat objects corresponding to samples
+Seurat.list <- NULL
+for (i in 1:length(cdl.1)){
+  Seurat.list[[i]] <- CreateSeuratObject(counts = cdl.1[[i]], min.cells = 2, min.features = 1000)
+}
+```
+
+```{r}
+#choosing parameters of integration
+n.var.features <- 4500
+n.integr.features <- 3000
+nn.pcs <- 25
+```
+
+```{r}
+#generating title for future plots to remember which parameters were used
+title.w.param <- paste('UMAP-', n.integr.features, '\n n.var.features=', n.var.features,
+                       '\n dim =', nn.pcs)
+```
+
+```{r}
+#normalizing & finding variable genes for individual seurat objects
+for (i in 1:length(Seurat.list)) {
+  Seurat.list[[i]] <- NormalizeData(Seurat.list[[i]], verbose = T)
+  Seurat.list[[i]] <- FindVariableFeatures(Seurat.list[[i]], selection.method = "vst",
+                                           nfeatures = n.var.features, verbose = T)
+}
+```
+```{r}
+# integration
+features <- SelectIntegrationFeatures(object.list = Seurat.list, nfeatures = n.integr.features)
+S.anchors <- FindIntegrationAnchors(object.list = Seurat.list, anchor.features = features)
+```
+
+```{r}
+# integration
+to_integrate <- c(row.names(HS.counts.raw))
+#to_integrate <- Reduce(intersect, lapply(S.anchors@object.list, rownames))
+Seurat.integr <- IntegrateData(anchorset = S.anchors, k.weight = 80, features.to.integrate = to_integrate)
+```
+
+#============================================================
+## Data intergration from different donors_end
+
+
+
+#============================================================
+## Clustering_start
+
+```{r}
+# removing process intermediates 
+rm(list = ls()[grep("counts.N|S.anchor|Seurat.list", ls(), invert = F)])
+```
+
+```{r}
+# clustering 
+DefaultAssay(Seurat.integr) <- "integrated"
+Seurat.integr <- ScaleData(Seurat.integr, verbose = T, features)
+Seurat.integr <- RunPCA(Seurat.integr, verbose = F)
+Seurat.integr <- RunUMAP(Seurat.integr, dims = 1:nn.pcs, verbose = T)
+Seurat.integr <- FindNeighbors(Seurat.integr, dims = 1:nn.pcs, verbose = T)
+#FindClusters(Seurat.integr, resolution =1.2, verbose = T)
+#DimPlot(test, group.by = "seurat_clusters", cols = XX.color.Paired.to.22.v2, label = T)
+```
+
+```{r}
+#resolution = 4.5 for
+Seurat.integr <- FindClusters(Seurat.integr, resolution =3.4, verbose = T)
+DimPlot(Seurat.integr, group.by = "seurat_clusters", label = T)
+```
+#============================================================
+## Clustering_end
+
+
+
+#===========================================================
+## Import cluster annotation and metadata from previous documents_start
+
+```{r}
+# importing clusters annotation from Meta df to new seurat object
+# ===========================================
+Meta.1066.wo.glia <- Meta.fused[!(rownames(Meta.fused) %in% cells.GLIA.DUBL),]
+cl.conserv <- Meta.1066.wo.glia$cl.conserv
+cl.HC.LC.split <-Meta.1066.wo.glia$cl.HC.LC.split
+cl.Ab.split.3 <- Meta.1066.wo.glia$cl.Ab.split.3
+cl.Ab.split.4 <- Meta.1066.wo.glia$cl.Ab.split.4
+
+names(cl.conserv) <- rownames(Meta.1066.wo.glia)
+names(cl.HC.LC.split) <- rownames(Meta.1066.wo.glia)
+names(cl.Ab.split.3) <- rownames(Meta.1066.wo.glia)
+names(cl.Ab.split.4) <- rownames(Meta.1066.wo.glia)
+
+Seurat.integr$cl.conserv <- cl.conserv
+Seurat.integr$cl.HC.LC.split <- cl.HC.LC.split
+Seurat.integr$cl.Ab.split.3 <- cl.Ab.split.3
+Seurat.integr$cl.Ab.split.4 <- cl.Ab.split.4
+# ==================================================
+```
+
+```{r}
+##==================================================
+# importing clusters annotation from Meta df to new seurat object
+# ===========================================
+Meta.1066.wo.glia <- Meta.fused[!(rownames(Meta.fused) %in% cells.GLIA.DUBL),]
+cl.conserv <- Meta.1066.wo.glia$cl.conserv
+
+diameter <-Meta.1066.wo.glia$diameter
+names(diameter) <- rownames(Meta.1066.wo.glia)
+
+donor <-Meta.1066.wo.glia$donor
+names(donor) <- rownames(Meta.1066.wo.glia)
+
+drg_level <-Meta.1066.wo.glia$drg_level
+names(drg_level) <- rownames(Meta.1066.wo.glia)
+
+drg_location <-Meta.1066.wo.glia$drg_location
+names(drg_location) <- rownames(Meta.1066.wo.glia)
+
+batch <-Meta.1066.wo.glia$batch
+names(batch) <- rownames(Meta.1066.wo.glia)
+
+Seurat.integr$diameter <- diameter
+
+Seurat.integr$drg_level <- drg_level
+
+Seurat.integr$drg_location <- drg_location
+
+Seurat.integr$batch <- batch
+
+Seurat.integr$donor <- donor
+
+# ==================================================
+```
+#===========================================================
+## Import cluster annotation and metadata from previous documents_end
+
+
+
+#===========================================================
+## Assign cluster into functional groups_start
+
+```{r}
+## Get cell identity of each Seurat cluster
+cl0_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='0',])
+cl1_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='1',])
+cl2_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='2',])
+cl3_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='3',])
+cl4_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='4',])
+cl5_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='5',])
+cl6_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='6',])
+cl7_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='7',])
+cl8_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='8',])
+cl9_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='9',])
+cl10_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='10',])
+cl11_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='11',])
+cl12_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='12',])
+cl13_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='13',])
+cl14_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='14',])
+cl15_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='15',])
+cl16_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='16',])
+cl17_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='17',])
+cl18_cell <- row.names(Seurat.integr[[]][Seurat.integr[[]]$seurat_clusters=='18',])
+```
+
+```{r}
+## manually assign cluster based on UMAP
+## Select cells based on UMAP
+
+#Cells_selected <- CellSelector(a)
+#Print(Cells_selected)
+```
+
+```{r}
+## cl.TRPM8 and cl.CLTMR assignment are based on UMAP, Un.Gi and Ab.LTMR assignment are based on cl.conserve clustering. 
+cl.TRPM8 <- c("N2-RL5-183","N2-RT12-104","N3-RL2-171","N3-RL2-174","N3-RT11-128","N4-RL3-29","N4-RT12-101","N4-RT12-177")
+cl.CLTMR <- c("N2-RT12-22","N2-RT12-105","N4-RL3-9","N4-RL3-132","N4-RL3-138","N4-RL3-142","N4-RL3-171","N4-RT12-127","N4-RT12-146")
+Un.Gi <- c("N2-RL5-12","N2-RL5-23","N2-RL5-29","N2-RL5-67","N2-RL5-68","N2-RL5-92","N2-RL5-98","N2-RL5-105","N2-RL5-108","N2-RL5-170","N2-RT12-62","N2-RT12-181","N3-RL2-117","N3-RL2-185","N3-RT11-5","N3-RT11-59","N3-RT11-126","N3-RT11-152","N3-RT11-191","N4-RL3-58","N4-RL3-155","N4-RL3-156","N4-RT12-81") 
+Ab.LTMR_from_cl3_in_cl.conserv <- c("N2-RL5-26","N2-RL5-165","N2-RT12-32","N2-RT12-47","N2-RT12-80","N2-RT12-85","N3-RL2-162","N3-RT11-95","N3-RT11-182","N4-RT12-110","N4-RT12-184")
+## remove selected cells from existing clusters
+cl3_cell_new <- cl3_cell
+cl9_cell_new <- cl9_cell
+cl17_cell_new <- cl17_cell
+cl0_cell_new <- cl0_cell
+cl2_cell_new <- cl2_cell
+cl5_cell_new <- cl5_cell
+cl7_cell_new <- cl7_cell
+cl13_cell_new <- cl13_cell
+cl18_cell_new <- cl18_cell
+
+
+
+#cl3_cell_new <- cl3_cell
+#cl3_cell_new %in% cl.TRPM8
+#cl3_cell_new <- cl3_cell_new[! cl3_cell_new %in% cl.TRPM8]
+
+
+cl3_cell_new <- cl3_cell_new[! cl3_cell_new %in% cl.TRPM8]
+cl9_cell_new <- cl9_cell_new[! cl9_cell_new %in% cl.TRPM8]
+cl17_cell_new <- cl17_cell_new[! cl17_cell_new %in% cl.TRPM8]
+cl3_cell_new <- cl3_cell_new[! cl3_cell_new %in% cl.CLTMR]
+cl0_cell_new <- cl0_cell_new[! cl0_cell_new %in% Un.Gi]
+cl2_cell_new <- cl2_cell_new[! cl2_cell_new %in% Un.Gi]
+cl3_cell_new <- cl3_cell_new[! cl3_cell_new %in% Un.Gi]
+cl5_cell_new <- cl5_cell_new[! cl5_cell_new %in% Un.Gi]
+cl7_cell_new <- cl7_cell_new[! cl7_cell_new %in% Un.Gi]
+cl13_cell_new <- cl13_cell_new[! cl13_cell_new %in% Un.Gi]
+cl18_cell_new <- cl18_cell_new[! cl18_cell_new %in% Un.Gi]
+cl3_cell_new <- cl3_cell_new[! cl3_cell_new %in% Ab.LTMR_from_cl3_in_cl.conserv]
+
+
+```
+
+
+
+#Rename clusters (cl.conserv)___new name
+```{r}
+## cl.Ab.split.2 C0-Propr C1-NP1 C2-PEP.H0 C3-PEP.H0 C4-PEP.H8 C5-Ab.LTMR C6-PEP.H5 C7-Ab.LTMR C8-PEP.H4 C9-PEP1.13 C10-NP1 C11-Ad.LTMR C12-NP3 C13-Ad.LTMR C14-PEP3 C15-PEP.H4.15 C16-NP2 C17-C.LTMR C18-Un.Gi
+
+random_group_labels <- sample(x = c("hATF3","hC.LTMR","hTRPM8","hPropr","hAb.LTMR.s22","hAb.LTMR","hAd.LTMR","hPEP.0","hPEP.NTRK3","hPEP.CHRNA7","hPEP.KIT","hPEP.PIEZOh","hPEP.TRPV1/A1.2","hPEP.TRPV1/A1.1","hPEP.SST","hNP2","hNP1"), size = ncol(x = Seurat.integr.3000), replace = TRUE)
+Seurat.integr$cl.conserv_final <- random_group_labels
+
+Seurat.integr$cl.conserv_final[cl0_cell_new] <- "hPropr"
+Seurat.integr$cl.conserv_final[cl1_cell] <- "hNP1"
+Seurat.integr$cl.conserv_final[cl2_cell_new] <- "hPEP.0"
+Seurat.integr$cl.conserv_final[cl3_cell_new] <- "hPEP.0"
+Seurat.integr$cl.conserv_final[cl4_cell] <- "hPEP.NTRK3"
+Seurat.integr$cl.conserv_final[cl5_cell_new] <- "hAb.LTMR"
+Seurat.integr$cl.conserv_final[cl6_cell] <- "hPEP.CHRNA7"
+Seurat.integr$cl.conserv_final[cl7_cell_new] <- "hAb.LTMR"
+Seurat.integr$cl.conserv_final[cl8_cell] <- "hPEP.PIEZOh"
+Seurat.integr$cl.conserv_final[cl9_cell_new] <- "hPEP.TRPV1/A1.1"
+Seurat.integr$cl.conserv_final[cl10_cell] <- "hNP1"
+Seurat.integr$cl.conserv_final[cl11_cell] <- "hAd.LTMR"
+Seurat.integr$cl.conserv_final[cl12_cell] <- "hPEP.SST"
+Seurat.integr$cl.conserv_final[cl13_cell_new] <- "hAd.LTMR"
+Seurat.integr$cl.conserv_final[cl14_cell] <- "hPEP.KIT"
+Seurat.integr$cl.conserv_final[cl15_cell] <- "hPEP.TRPV1/A1.2"
+Seurat.integr$cl.conserv_final[cl16_cell] <- "hNP2"
+Seurat.integr$cl.conserv_final[cl.CLTMR] <- "hC.LTMR"
+Seurat.integr$cl.conserv_final[Un.Gi] <- "hATF3"
+Seurat.integr$cl.conserv_final[cl.TRPM8] <- "hTRPM8"
+Seurat.integr$cl.conserv_final[Ab.LTMR_from_cl3_in_cl.conserv] <- "hAb.LTMR"
+
+
+```
+
+
+
+
+```{r}
+##conserv_original
+Idents(Seurat.integr) <- Seurat.integr$cl.conserv_final
+
+Idents(Seurat.integr) <- factor(x = Idents(Seurat.integr), levels =c("hNP1","hNP2","hPEP.SST","hPEP.TRPV1/A1.1","hPEP.TRPV1/A1.2","hPEP.PIEZOh","hPEP.KIT","hPEP.CHRNA7","hPEP.NTRK3","hPEP.0","hAd.LTMR","hAb.LTMR","hPropr","hC.LTMR","hTRPM8","hATF3"))
+```
+
+```{r}
+## assign color for each cluster
+XX.color.Paired.cl.conserv_final=c('#6666FF','#00a9ff','#8494ff','#c77cff','#ff66b2','#ff9933','#ff68a1','#ff3333','#ed68ed','#dcc66e','#0cb702','#aba300','#7cae00','#FF99FF','#00b8e7','#928e8f')
+
+```
+
+
+```{r}
+DimPlot(Seurat.integr, group.by = "cl.conserv_final",label = F, cols = XX.color.Paired.cl.conserv_final, order = c("hATF3","hTRPM8","hC.LTMR", "hPropr","hAb.LTMR","hAd.LTMR","hPEP.0","hPEP.NTRK3","hPEP.CHRNA7","hPEP.KIT","hPEP.PIEZOh","hPEP.TRPV1/A1.2","hPEP.TRPV1/A1.1","hPEP.SST","hNP2","hNP1"))
+
+```
+```{r}
+#
+Seurat.integr.3000 <- Seurat.integr
+
+```
+
+
+```{r}
+# Save metadata
+
+save(Seurat.integr.3000,HS.counts.raw,Meta.1066.wo.glia,Meta.fused, file = "E:/Posdoc work at Upenn/Lab_work/Projected_I_am_intersted_in/Transcriptome of human DRG neurons/Final analysis for publication/Hs_LCM_final_new_name.RData")
+```
+
+```{r,fig.height=6, fig.width=12}
+## Dotplot itch receptors
+
+## itch receptor ['HRH1','HRH4','MRGPRX1','MRGPRX4','HTR2A','HTR7','F2RL1','MRGPRD','CYSLTR2','IL4R','IL13RA1','IL31RA','OSMR','IL7R','CRLF2','IL1RAP','TLR3','TLR7','JAK1']
+
+DotPlot(Seurat.integr.3000, features = c('HRH1','HRH4','MRGPRX1','MRGPRX4','HTR2A','HTR7','F2RL1','MRGPRD','CYSLTR2','IL4R','IL13RA1','IL31RA','OSMR','IL7R','CRLF2','IL1RAP','TLR3','TLR7','JAK1')) + RotatedAxis() + theme(axis.text = element_text(size = 10))
+
+```
+
